@@ -4,7 +4,7 @@ import { FormEvent, useEffect, useState, type CSSProperties } from 'react';
 import {
   ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, Clock3, Crown, Edit3,
   Flame, Heart, Home, Lightbulb, LockKeyhole, Map, Play, Puzzle, Rocket,
-  ShieldCheck, Sparkles, Star, Timer, Trophy, UserRound,
+  ShieldCheck, Star, Timer, Trophy, UserRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -56,7 +56,7 @@ function Meter({ value, color }: { value: number; color?: string }) {
 }
 
 function Logo() {
-  return <div className="brand" aria-label="Zeka 123"><span className="brand-mark"><Sparkles size={22} strokeWidth={3} /></span><span>ZEKA<span>123</span></span></div>;
+  return <div className="brand" aria-label="Zeka123"><img src="/assets/zeka-wordmark.png" alt="ZEKA" /><span className="brand-number">123</span></div>;
 }
 
 function TopBar({ profile, onEdit, parent = false }: { profile: ChildProfile; onEdit: () => void; parent?: boolean }) {
@@ -80,7 +80,7 @@ function ProfileForm({ initial, onSave, title = 'Kenalan dulu, yuk!' }: { initia
 }
 
 function Onboarding({ onSave }: { onSave: (profile: ChildProfile) => void }) {
-  return <main className="onboarding"><div className="onboarding-cloud one" /><div className="onboarding-cloud two" /><section className="onboarding-card"><div className="onboarding-mascot"><span>Hai! Aku <b>Kobi</b> 👋</span><img src="/assets/zeka-mascot.png" alt="Kobi si panda merah menyapa" /></div><ProfileForm onSave={onSave} /><p className="privacy-note"><ShieldCheck size={16} /> Data profil tersimpan aman di perangkat ini.</p></section></main>;
+  return <main className="onboarding"><div className="onboarding-cloud one" /><div className="onboarding-cloud two" /><section className="onboarding-card"><div className="onboarding-brand"><Logo /><small>Zona Eksplorasi Kompetensi Anak</small></div><div className="onboarding-mascot"><span>Hai! Aku <b>Kobi</b> 👋</span><img src="/assets/zeka-mascot.png" alt="Kobi si panda merah menyapa" /></div><ProfileForm onSave={onSave} /><p className="privacy-note"><ShieldCheck size={16} /> Data profil tersimpan aman di perangkat ini.</p></section></main>;
 }
 
 function SubjectIcon({ subject }: { subject: (typeof subjects)[number] }) {
