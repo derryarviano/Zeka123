@@ -56,7 +56,7 @@ function Meter({ value, color }: { value: number; color?: string }) {
 }
 
 function Logo() {
-  return <div className="brand" aria-label="Zeka123"><img src="/assets/zeka-wordmark.png" alt="ZEKA" /><span className="brand-number">123</span></div>;
+  return <div className="brand" aria-label="Zeka123"><img src="/assets/zeka-wordmark.png" alt="ZEKA" /><span className="brand-number" aria-hidden="true"><i>1</i><i>2</i><i>3</i></span></div>;
 }
 
 function TopBar({ profile, onEdit, parent = false }: { profile: ChildProfile; onEdit: () => void; parent?: boolean }) {
