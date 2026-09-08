@@ -1,174 +1,185 @@
 'use client';
 
-import { FormEvent, useEffect, useState, type CSSProperties } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import {
-  ArrowLeft, BarChart3, BookOpen, BookOpenText, Check, ChevronRight, Clock3, Crown, Edit3,
-  Flame, Heart, Home, Lightbulb, LockKeyhole, Map, Play, Puzzle, Rocket,
-  Languages, Microscope, Palette, Shapes, ShieldCheck, Star, Timer, Trophy, UserRound,
+  ArrowLeft, BookOpenText, Check, ChevronRight, Clock3, Compass, Crown,
+  Edit3, FlaskConical, Flower2, Home, Languages, Leaf, Lightbulb,
+  LockKeyhole, Map, Microscope, Palette, Parentheses, Play, Puzzle,
+  ShieldCheck, Shapes, Sparkles, Star, Trees, UserRound, Volume2, WandSparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
-import { Progress, ProgressIndicator, ProgressTrack } from '@/components/ui/progress';
 
-type View = 'home' | 'explore' | 'creative' | 'progress' | 'parent' | 'modules' | 'lesson';
-type ChildProfile = { name: string; age: string; grade: '1' | '2' | '3' };
-type SubjectName = 'Bahasa Indonesia' | 'Matematika' | 'Bahasa Inggris' | 'Sains & Dunia Sekitar';
+type Grade = '1' | '2' | '3';
+type Profile = { name: string; age: string; grade: Grade };
+type SubjectId = 'indo' | 'math' | 'english' | 'science';
+type View = 'home' | 'subjects' | 'creative' | 'collection' | 'modules' | 'lesson' | 'parent';
+type Question = { prompt: string; options: string[]; answer: string; hint: string };
 
-const subjects: { name: SubjectName; description: string; icon: string; color: string }[] = [
-  { name: 'Bahasa Indonesia', description: 'Baca, cerita, dan kosakata', icon: '📚', color: 'coral' },
-  { name: 'Matematika', description: 'Angka dan logika seru', icon: '🔢', color: 'blue' },
-  { name: 'Bahasa Inggris', description: 'ABC & first words', icon: '🇬🇧', color: 'yellow' },
-  { name: 'Sains & Dunia Sekitar', description: 'Temukan cara dunia bekerja', icon: '🔬', color: 'green' },
+const subjects = [
+  { id: 'indo' as SubjectId, title: 'Bahasa Indonesia', world: 'Kampung Kata', copy: 'Baca, susun, dan ceritakan', tone: 'coral' },
+  { id: 'math' as SubjectId, title: 'Matematika', world: 'Lembah Angka', copy: 'Hitung, ukur, dan temukan pola', tone: 'blue' },
+  { id: 'english' as SubjectId, title: 'Bahasa Inggris', world: 'Taman Bahasa', copy: 'Dengar dan pakai kata sehari-hari', tone: 'yellow' },
+  { id: 'science' as SubjectId, title: 'Sains & Dunia Sekitar', world: 'Rimba Penemuan', copy: 'Amati alam di dekatmu', tone: 'green' },
 ];
 
-const lessonBank: Record<ChildProfile['grade'], Record<SubjectName, { prompt: string; options: string[]; correct: string; hint: string }>> = {
-  '1': {
-    'Bahasa Indonesia': { prompt: 'Kata mana yang dimulai dengan huruf B?', options: ['Buku', 'Sapu', 'Meja'], correct: 'Buku', hint: 'Buku dimulai dengan bunyi “B”.' },
-    'Matematika': { prompt: 'Ada 2 apel, lalu ditambah 1. Jadi berapa?', options: ['2', '3', '4'], correct: '3', hint: 'Dua ditambah satu sama dengan tiga.' },
-    'Bahasa Inggris': { prompt: 'Which one means “kucing”?', options: ['Cat', 'Sun', 'Book'], correct: 'Cat', hint: 'Cat artinya kucing.' },
-    'Sains & Dunia Sekitar': { prompt: 'Manakah yang termasuk makhluk hidup?', options: ['Kucing', 'Batu', 'Meja'], correct: 'Kucing', hint: 'Kucing tumbuh, bergerak, dan membutuhkan makanan.' },
-  },
-  '2': {
-    'Bahasa Indonesia': { prompt: 'Kalimat mana yang ditulis dengan benar?', options: ['Budi membaca buku.', 'budi membaca buku', 'Budi Membaca Buku'], correct: 'Budi membaca buku.', hint: 'Kalimat dimulai huruf besar dan diakhiri tanda titik.' },
-    'Matematika': { prompt: 'Berapakah hasil 8 + 7?', options: ['13', '15', '16'], correct: '15', hint: 'Delapan ditambah tujuh sama dengan lima belas.' },
-    'Bahasa Inggris': { prompt: 'Complete it: “I have two ...”', options: ['books', 'book', 'bookes'], correct: 'books', hint: 'Lebih dari satu book disebut books.' },
-    'Sains & Dunia Sekitar': { prompt: 'Bagian tumbuhan mana yang menyerap air?', options: ['Akar', 'Bunga', 'Buah'], correct: 'Akar', hint: 'Akar menyerap air dan mineral dari tanah.' },
-  },
-  '3': {
-    'Bahasa Indonesia': { prompt: 'Manakah kata yang memiliki arti sama dengan “gembira”?', options: ['Senang', 'Sedih', 'Marah'], correct: 'Senang', hint: 'Gembira dan senang memiliki arti yang mirip.' },
-    'Matematika': { prompt: 'Berapakah hasil 6 × 4?', options: ['20', '24', '28'], correct: '24', hint: 'Enam kelompok berisi empat jumlahnya dua puluh empat.' },
-    'Bahasa Inggris': { prompt: 'Choose the correct sentence.', options: ['She likes apples.', 'She like apples.', 'She liking apples.'], correct: 'She likes apples.', hint: 'Gunakan likes setelah she.' },
-    'Sains & Dunia Sekitar': { prompt: 'Perubahan air menjadi uap disebut apa?', options: ['Menguap', 'Membeku', 'Mencair'], correct: 'Menguap', hint: 'Panas mengubah air cair menjadi uap.' },
-  },
-};
+const moduleNames = ['Gerbang Kenalan','Jejak Pertama','Jembatan Coba','Pondok Cerita','Bukit Tantangan','Danau Latihan','Menara Kejutan','Gua Rahasia','Puncak Hebat','Festival Akhir'];
 
-const parentSkills = [
-  { name: 'Membaca dan memahami', status: 'Makin lancar', value: 76, color: 'var(--brand-coral)', icon: '📖' },
-  { name: 'Berhitung dan logika', status: 'Perlu latihan', value: 48, color: 'var(--brand-blue)', icon: '🧠' },
-  { name: 'Berani menjawab', status: 'Berkembang baik', value: 82, color: 'var(--brand-green)', icon: '💪' },
-];
+function SubjectMark({ id, size = 34 }: { id: SubjectId; size?: number }) {
+  const Icon = id === 'indo' ? BookOpenText : id === 'math' ? Shapes : id === 'english' ? Languages : Microscope;
+  return <Icon size={size} strokeWidth={2.4} />;
+}
 
-function Meter({ value, color }: { value: number; color?: string }) {
-  return <div className="toy-meter"><Progress value={value} style={{ '--meter-color': color ?? 'var(--brand-blue)' } as CSSProperties}><ProgressTrack><ProgressIndicator /></ProgressTrack></Progress><span style={{ left: `calc(${value}% - 15px)` }}>⭐</span></div>;
+function questionsFor(subject: SubjectId, grade: Grade): Question[] {
+  if (subject === 'math') {
+    if (grade === '1') return [
+      { prompt:'Ada 24 kelereng. Ditambah 5, jadi berapa?', options:['19','29','35'], answer:'29', hint:'Mulai dari 24, maju lima langkah.' },
+      { prompt:'Bilangan mana yang paling besar?', options:['67','76','66'], answer:'76', hint:'Bandingkan angka puluhannya.' },
+      { prompt:'Setengah dari 8 adalah...', options:['2','4','6'], answer:'4', hint:'Bagi 8 menjadi dua kelompok sama banyak.' },
+      { prompt:'Urutan yang benar adalah...', options:['18, 19, 20','18, 20, 19','20, 18, 19'], answer:'18, 19, 20', hint:'Hitung maju satu-satu.' },
+      { prompt:'30 dikurangi 7 sama dengan...', options:['21','23','37'], answer:'23', hint:'Mundur tujuh langkah dari 30.' },
+    ];
+    if (grade === '2') return [
+      { prompt:'Berapa hasil 6 × 4?', options:['20','24','28'], answer:'24', hint:'Enam kelompok berisi empat.' },
+      { prompt:'36 dibagi 6 sama dengan...', options:['5','6','7'], answer:'6', hint:'Cari enam kelompok yang sama.' },
+      { prompt:'Bilangan setelah 699 adalah...', options:['700','698','709'], answer:'700', hint:'Tambah satu pada 699.' },
+      { prompt:'428 + 70 sama dengan...', options:['438','488','498'], answer:'498', hint:'Tambahkan tujuh puluhan.' },
+      { prompt:'900 - 250 sama dengan...', options:['650','750','850'], answer:'650', hint:'Kurangi dua ratus, lalu lima puluh.' },
+    ];
+    return [
+      { prompt:'Berapa hasil 8 × 7?', options:['48','54','56'], answer:'56', hint:'Delapan kelompok berisi tujuh.' },
+      { prompt:'72 dibagi 8 sama dengan...', options:['8','9','10'], answer:'9', hint:'Delapan kali sembilan adalah 72.' },
+      { prompt:'Pecahan terkecil adalah...', options:['1/2','1/4','1/3'], answer:'1/4', hint:'Jika pembilangnya satu, penyebut lebih besar berarti bagian lebih kecil.' },
+      { prompt:'375 + 425 sama dengan...', options:['700','750','800'], answer:'800', hint:'Gabungkan ratusan, puluhan, lalu satuan.' },
+      { prompt:'Urutkan dari kecil ke besar.', options:['1/4, 1/3, 1/2','1/2, 1/3, 1/4','1/3, 1/4, 1/2'], answer:'1/4, 1/3, 1/2', hint:'Bayangkan satu kue dibagi menjadi bagian yang berbeda.' },
+    ];
+  }
+  if (subject === 'english') return [
+    { prompt:'Which word means “rumah”?', options:['House','Chair','Water'], answer:'House', hint:'House adalah tempat kita tinggal.' },
+    { prompt:'Choose a morning greeting.', options:['Good morning','Good night','Goodbye'], answer:'Good morning', hint:'We say it when the day begins.' },
+    { prompt:'Complete: “I am ...”', options:['happy','apple','table'], answer:'happy', hint:'Happy describes a feeling.' },
+    { prompt:'Which one is a family member?', options:['Mother','Window','Bread'], answer:'Mother', hint:'Mother means ibu.' },
+    { prompt:'What do you drink?', options:['Water','Pencil','Shoe'], answer:'Water', hint:'Water means air.' },
+  ];
+  if (subject === 'science') return [
+    { prompt:'Mana yang termasuk makhluk hidup?', options:['Kucing','Batu','Sendok'], answer:'Kucing', hint:'Makhluk hidup tumbuh dan membutuhkan makanan.' },
+    { prompt:'Bagian tumbuhan yang menyerap air adalah...', options:['Akar','Bunga','Buah'], answer:'Akar', hint:'Akar berada di dalam tanah.' },
+    { prompt:'Agar es mencair, es membutuhkan...', options:['Panas','Gelap','Angin'], answer:'Panas', hint:'Suhu yang lebih hangat mengubah es menjadi air.' },
+    { prompt:'Benda yang dapat ditarik magnet adalah...', options:['Paku besi','Daun','Kertas'], answer:'Paku besi', hint:'Magnet menarik beberapa jenis logam.' },
+    { prompt:'Kegiatan yang aman dilakukan bersama keluarga adalah...', options:['Menanam kacang','Menyentuh api','Mencicipi cairan asing'], answer:'Menanam kacang', hint:'Pilih kegiatan yang tidak memakai api atau bahan berbahaya.' },
+  ];
+  return [
+    { prompt:'Kata mana yang dimulai dengan bunyi “b”?', options:['Buku','Sapu','Meja'], answer:'Buku', hint:'Ucapkan perlahan: bu-ku.' },
+    { prompt:'Kalimat mana yang ditulis dengan benar?', options:['Budi membaca buku.','budi membaca buku','Budi Membaca Buku'], answer:'Budi membaca buku.', hint:'Awali dengan huruf besar dan akhiri dengan titik.' },
+    { prompt:'Kata yang mirip artinya dengan “gembira” adalah...', options:['Senang','Sedih','Takut'], answer:'Senang', hint:'Gembira dan senang menggambarkan perasaan yang serupa.' },
+    { prompt:'Susunan kalimat yang tepat adalah...', options:['Ibu memasak nasi.','Nasi ibu memasak.','Memasak nasi ibu.'], answer:'Ibu memasak nasi.', hint:'Mulai dari siapa, lalu kegiatannya.' },
+    { prompt:'Tanda yang tepat di akhir pertanyaan adalah...', options:['?','.',','], answer:'?', hint:'Kalimat tanya memakai tanda tanya.' },
+  ];
 }
 
 function Logo() {
-  return <div className="brand" aria-label="Zeka123"><img src="/assets/zeka-wordmark.png" alt="ZEKA" /><span className="brand-number" aria-hidden="true"><i>1</i><i>2</i><i>3</i></span></div>;
+  return <div className="brand" aria-label="Zeka123"><img src="/assets/zeka-wordmark.png" alt="ZEKA" /><span className="brand-number"><i>1</i><i>2</i><i>3</i></span></div>;
 }
 
-function TopBar({ profile, onEdit, parent = false }: { profile: ChildProfile; onEdit: () => void; parent?: boolean }) {
-  return <header className="topbar"><Logo /><div className="topbar-actions"><button className="avatar" onClick={onEdit} aria-label="Edit profil anak">{profile.name.charAt(0).toUpperCase()}</button></div></header>;
-}
-
-function ProfileForm({ initial, onSave, title = 'Kenalan dulu, yuk!' }: { initial?: ChildProfile; onSave: (profile: ChildProfile) => void; title?: string }) {
-  const [name, setName] = useState(initial?.name ?? '');
-  const [age, setAge] = useState(initial?.age ?? '7');
-  const [grade, setGrade] = useState<ChildProfile['grade']>(initial?.grade ?? '1');
-  const submit = (event: FormEvent) => { event.preventDefault(); if (name.trim()) onSave({ name: name.trim(), age, grade }); };
-  return <form className="profile-form" onSubmit={submit}>
-    <div><p className="eyebrow">Profil petualang</p><h1>{title}</h1><p>Kobi akan memilihkan permainan dan soal yang pas untukmu.</p></div>
-    <div className="field"><Label htmlFor="child-name">Nama Anak</Label><Input id="child-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Contoh: Nara" autoComplete="off" required /></div>
-    <div className="field-row">
-      <div className="field"><Label htmlFor="child-age">Usia</Label><NativeSelect id="child-age" value={age} onChange={(e) => setAge(e.target.value)}>{['6','7','8','9'].map((item) => <NativeSelectOption key={item} value={item}>{item} tahun</NativeSelectOption>)}</NativeSelect></div>
-      <div className="field"><Label htmlFor="child-grade">Jenjang Pendidikan</Label><NativeSelect id="child-grade" value={grade} onChange={(e) => setGrade(e.target.value as ChildProfile['grade'])}><NativeSelectOption value="1">Kelas 1 SD</NativeSelectOption><NativeSelectOption value="2">Kelas 2 SD</NativeSelectOption><NativeSelectOption value="3">Kelas 3 SD</NativeSelectOption></NativeSelect></div>
-    </div>
-    <Button className="big-primary" type="submit"><Rocket size={21} /> {initial ? 'Simpan perubahan' : 'Mulai petualangan'}</Button>
-  </form>;
-}
-
-function Onboarding({ onSave }: { onSave: (profile: ChildProfile) => void }) {
-  return <main className="onboarding"><div className="onboarding-cloud one" /><div className="onboarding-cloud two" /><section className="onboarding-card"><div className="onboarding-brand"><Logo /><small>Zona Eksplorasi Kompetensi Anak</small></div><div className="onboarding-mascot"><span>Hai! Aku <b>Kobi</b> 👋</span><img src="/assets/zeka-mascot.png" alt="Kobi si panda merah menyapa" /></div><ProfileForm onSave={onSave} /><p className="privacy-note"><ShieldCheck size={16} /> Data profil tersimpan aman di perangkat ini.</p></section></main>;
-}
-
-function SubjectIcon({ subject }: { subject: (typeof subjects)[number] }) {
-  return <span className={`cartoon-subject-icon ${subject.color}`} aria-hidden="true"><span>{subject.icon}</span>{subject.name === 'Bahasa Inggris' && <b>ABC</b>}</span>;
-}
-
-function HomeView({ profile, onEdit, onSubject, onExplore }: { profile: ChildProfile; onEdit: () => void; onSubject: (subject: SubjectName) => void; onExplore: () => void }) {
-  return <><TopBar profile={profile} onEdit={onEdit} /><main className="content home-view">
-    <section className="welcome-row"><div><h1>Halo, {profile.name}! <span aria-hidden="true">👋</span></h1><p className="soft-copy">Petualang Kelas {profile.grade}, siap main sambil belajar?</p></div><span className="grade-sticker">Kelas {profile.grade}</span></section>
-    <section className="mission-card"><div className="mission-copy"><div className="pill"><Clock3 size={16} /> Sekitar 10 menit</div><h2>Lanjutkan<br />petualanganmu</h2><p>Satu sesi singkat yang dipilih sesuai kemampuanmu.</p><Button className="primary-action" onClick={() => onSubject('Bahasa Indonesia')}><Play size={19} fill="currentColor" /> Mulai belajar</Button></div><div className="mascot-wrap"><span className="speech">Ayo, {profile.name}!</span><img src="/assets/zeka-mascot.png" alt="Kobi si panda merah" /></div></section>
-    <section className="section-block"><div className="section-heading"><div><p className="eyebrow">Pilih petualangan</p><h2>Mau belajar apa?</h2></div><Button variant="ghost" onClick={onExplore} className="see-all">Lihat semua <ChevronRight size={18} /></Button></div><div className="subject-grid">{subjects.map((subject) => <button key={subject.name} className={`subject-card ${subject.color}`} onClick={() => onSubject(subject.name)}><SubjectIcon subject={subject} /><h3>{subject.name}</h3><p>{subject.description}</p><div className="subject-bottom"><span>7 modul terbuka</span><span className="go-bubble"><ChevronRight size={18} /></span></div></button>)}</div></section>
-    <button className="home-activity"><span className="activity-icon">🏠</span><span><strong>Misi keluarga hari ini</strong><small>Cari 3 benda berbentuk lingkaran di rumah</small></span><ChevronRight size={22} /></button>
-  </main></>;
-}
-
-function ExploreView({ profile, onEdit, onSubject }: { profile: ChildProfile; onEdit: () => void; onSubject: (subject: SubjectName) => void }) {
-  return <><TopBar profile={profile} onEdit={onEdit} /><main className="content"><div className="page-title"><p className="eyebrow">Untuk Kelas {profile.grade}</p><h1>Pilih dunia belajarmu</h1><p className="soft-copy">Semua mata pelajaran boleh dijelajahi. Tujuh modul pertama terbuka.</p></div><div className="module-list">{subjects.map((subject) => <button className={`world-card ${subject.color}`} key={subject.name} onClick={() => onSubject(subject.name)}><SubjectIcon subject={subject} /><div><small>7 MODUL GRATIS</small><h2>{subject.name}</h2><p>{subject.description}</p></div><span className="world-arrow"><ChevronRight /></span></button>)}</div><div className="gentle-note"><span>💡</span><p><strong>Tidak perlu terburu-buru.</strong> Kobi menyesuaikan tantangan dari jenjang dan jawabanmu.</p></div></main></>;
-}
-
-function CreativeView({ profile, onParent }: { profile: ChildProfile; onParent: () => void }) {
-  const activities = [
-    { icon: '🎨', title: 'Studio warna', copy: 'Buat gambar dari tiga bentuk sederhana.', tone: 'coral' },
-    { icon: '📖', title: 'Cerita bercabang', copy: 'Bantu Kobi memilih akhir cerita yang baik.', tone: 'blue' },
-    { icon: '🌱', title: 'Eksperimen keluarga', copy: 'Amati biji kacang bersama orang tua.', tone: 'green' },
+function Onboarding({ onComplete }: { onComplete: (profile: Profile) => void }) {
+  const [step, setStep] = useState<'hello'|'profile'|'assessment'>('hello');
+  const [profile, setProfile] = useState<Profile>({ name:'', age:'7', grade:'1' });
+  const [assessment, setAssessment] = useState(0);
+  const checks = [
+    { prompt:'Pilih gambar yang cocok untuk belajar membaca.', options:['Buku','Sepatu','Payung'], answer:'Buku' },
+    { prompt:'Berapa 3 + 2?', options:['4','5','6'], answer:'5' },
+    { prompt:'Which one means “blue”?', options:['Biru','Merah','Hijau'], answer:'Biru' },
+    { prompt:'Mana yang membutuhkan air untuk tumbuh?', options:['Tanaman','Batu','Meja'], answer:'Tanaman' },
   ];
-  const comingSoon = () => alert('Aktivitas ini sedang disiapkan bersama tim akademik.');
-  return <><TopBar profile={profile} onEdit={onParent} /><main className="content creative-view"><div className="page-title"><p className="eyebrow">Ruang Kreatif</p><h1>Coba, buat, dan ceritakan</h1><p className="soft-copy">Tidak ada jawaban salah. Pilih kegiatan yang membuatmu penasaran.</p></div><section className="creative-hero"><div><span className="story-label">PILIHAN KOBI</span><h2>Buat kota dari bentuk</h2><p>Gabungkan lingkaran, segitiga, dan persegi menjadi kota impianmu.</p><Button onClick={comingSoon}><Palette size={20}/> Mulai berkarya</Button></div><div className="shape-play" aria-hidden="true"><i/><i/><i/><i/></div></section><div className="creative-list">{activities.map((item) => <button key={item.title} className={'creative-item ' + item.tone} onClick={comingSoon}><span>{item.icon}</span><span><strong>{item.title}</strong><small>{item.copy}</small></span><ChevronRight /></button>)}</div><p className="family-safety"><ShieldCheck size={18}/> Eksperimen rumah selalu meminta pendampingan orang tua.</p></main></>;
-}
-function ModulesView({ profile, subjectName, onBack, onLesson, onPremium }: { profile: ChildProfile; subjectName: SubjectName; onBack: () => void; onLesson: () => void; onPremium: () => void }) {
-  const subject = subjects.find((item) => item.name === subjectName)!;
-  const sceneIcons = ['🌳', '☁️', '🏕️', '🌈', '⛺', '⛰️', '🎈', '🏰'];
-  const moduleNames = ['Ayo kenalan', 'Coba bersama Kobi', 'Main dan pilih', 'Cerita mini', 'Tantangan bintang', 'Petualangan lanjut', 'Misi kejutan', 'Uji kehebatan'];
-  return <main className={`modules-view ${subject.color}`}>
-    <header className="path-header"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Kembali"><ArrowLeft /></Button><Logo /><span className="path-grade">Kelas {profile.grade}</span></header>
-    <section className="path-intro"><SubjectIcon subject={subject} /><div><p className="eyebrow">Jalur petualangan</p><h1>{subject.name}</h1><p>Ikuti jalan bersama Kobi. Tujuh pos pertama terbuka gratis.</p></div></section>
-    <section className="adventure-map"><div className="map-river" aria-hidden="true" />{Array.from({ length: 8 }, (_, index) => { const unlocked = index < 7; return <div className={`map-row ${index % 2 ? 'right' : 'left'}`} key={index}><span className="scene-icon" aria-hidden="true">{sceneIcons[index]}</span><button className={`map-stop ${unlocked ? 'unlocked' : 'locked'}`} onClick={unlocked ? onLesson : onPremium}><span className="stop-number">{unlocked ? index + 1 : <LockKeyhole size={22} />}</span><span><small>{unlocked ? `MODUL ${index + 1}` : 'PAKET LENGKAP'}</small><strong>{moduleNames[index]}</strong></span>{unlocked && index === 6 && <b>BATAS GRATIS</b>}</button></div>; })}<img className="map-kobi" src="/assets/zeka-mascot.png" alt="Kobi menunggu di ujung jalur belajar" /></section>
-  </main>;
+  if (step === 'hello') return <main className="welcome-screen"><div className="welcome-sky"><Logo/><span className="welcome-orbit one"/><span className="welcome-orbit two"/><div className="kobi-hello"><div className="speech-card"><small>HAI, PETUALANG!</small><h1>Aku Kobi.</h1><p>Kita akan membaca, berhitung, dan menemukan hal baru bersama.</p></div><img src="/assets/zeka-mascot.png" alt="Kobi menyambut anak"/></div><Button className="start-button" onClick={() => setStep('profile')}>Ayo mulai <ChevronRight/></Button><p className="grownup-note"><ShieldCheck size={17}/> Disiapkan bersama orang tua · tanpa iklan</p></div></main>;
+  if (step === 'profile') {
+    const submit = (e: FormEvent) => { e.preventDefault(); if (profile.name.trim()) setStep('assessment'); };
+    return <main className="setup-screen"><section className="setup-card"><button className="round-back" onClick={() => setStep('hello')}><ArrowLeft/></button><div className="setup-kobi"><img src="/assets/zeka-mascot.png" alt="Kobi"/><span>Biar tantangannya pas untukmu.</span></div><div><p className="overline">UNTUK ORANG TUA</p><h1>Kenalkan petualang kecilmu</h1><p className="support">Profil membantu Kobi memilih materi sesuai jenjang anak.</p></div><form onSubmit={submit} className="profile-form"><div className="field"><Label htmlFor="name">Nama anak</Label><Input id="name" value={profile.name} onChange={e => setProfile({...profile,name:e.target.value})} placeholder="Contoh: Nara" required/></div><div className="field-pair"><div className="field"><Label htmlFor="age">Usia</Label><NativeSelect id="age" value={profile.age} onChange={e => setProfile({...profile,age:e.target.value})}>{['6','7','8','9'].map(x=><NativeSelectOption value={x} key={x}>{x} tahun</NativeSelectOption>)}</NativeSelect></div><div className="field"><Label htmlFor="grade">Jenjang</Label><NativeSelect id="grade" value={profile.grade} onChange={e => setProfile({...profile,grade:e.target.value as Grade})}>{['1','2','3'].map(x=><NativeSelectOption value={x} key={x}>Kelas {x} SD</NativeSelectOption>)}</NativeSelect></div></div><Button className="primary-big" type="submit">Lanjut asesmen <ChevronRight/></Button></form><p className="data-note"><ShieldCheck size={16}/> Tersimpan hanya di perangkat ini.</p></section></main>;
+  }
+  const item = checks[assessment];
+  return <main className="activity-screen"><header className="activity-top"><button className="round-back" onClick={() => setStep('profile')}><ArrowLeft/></button><div className="progress-rail"><i style={{width:((assessment+1)/checks.length*100)+'%'}}/></div><b>{assessment+1}/{checks.length}</b></header><section className="question-card assessment-card"><div className="kobi-guide"><img src="/assets/zeka-mascot.png" alt="Kobi"/><span>Coba sebisamu. Tidak ada nilai jelek!</span></div><p className="overline">ASESMEN SINGKAT</p><h1>{item.prompt}</h1><div className="choice-stack">{item.options.map(option=><button key={option} onClick={() => assessment === checks.length-1 ? onComplete({...profile,name:profile.name.trim()}) : setAssessment(assessment+1)}><span>{option}</span><ChevronRight/></button>)}</div><p className="quiet-copy">Jawaban membantu kami menentukan titik mulai, bukan memberi peringkat.</p></section></main>;
 }
 
-function SkillList() {
-  return <div className="skill-list">{parentSkills.map((skill) => <div className="skill-item" key={skill.name}><span className="skill-emoji">{skill.icon}</span><div className="skill-main"><div><strong>{skill.name}</strong><span>{skill.status}</span></div><Meter value={skill.value} color={skill.color} /></div><b className="skill-score">{skill.value}%</b></div>)}</div>;
+function Topbar({ profile, onParent }: { profile: Profile; onParent: () => void }) {
+  return <header className="topbar"><Logo/><button className="profile-chip" onClick={onParent}><span>{profile.name.charAt(0).toUpperCase()}</span><span><small>Petualang</small><b>{profile.name}</b></span><ChevronRight size={18}/></button></header>;
 }
 
-function PuzzleReward() {
-  const pieces = ['🚀', '🌙', '🪐', '⭐', '🛰️', '👨‍🚀'];
-  return <section className="puzzle-card"><div className="puzzle-copy"><p className="eyebrow">Tukar bintangmu</p><h2>Puzzle Luar Angkasa</h2><p>Setiap 80 bintang membuka satu potongan. Kumpulkan semuanya untuk melihat kejutan!</p><div className="puzzle-status"><Star size={18} fill="currentColor" /> 240 bintang = 3 potongan</div></div><div className="puzzle-grid" aria-label="3 dari 6 potongan puzzle terbuka">{pieces.map((piece, index) => <span key={piece} className={index < 3 ? 'found' : 'hidden-piece'}>{index < 3 ? piece : <LockKeyhole size={20} />}</span>)}</div></section>;
+function HomeView({ profile, openSubject, go, parent }: { profile:Profile; openSubject:(id:SubjectId)=>void; go:(v:View)=>void; parent:()=>void }) {
+  return <><Topbar profile={profile} onParent={parent}/><main className="screen home-screen"><section className="hello-strip"><div><p>Halo, {profile.name}!</p><h1>Mau bertualang<br/>ke mana hari ini?</h1></div><span className="level-badge">Kelas {profile.grade}</span></section><section className="continue-world"><span className="sun"/><div className="continue-copy"><span className="micro-pill"><Clock3 size={16}/> sekitar 10 menit</span><p>LANJUTKAN CERITA</p><h2>Misteri Kata<br/>di Tepi Sungai</h2><button onClick={() => openSubject('indo')}><Play size={21} fill="currentColor"/> Mulai</button></div><img src="/assets/zeka-mascot.png" alt="Kobi mengajak belajar"/><span className="speech-mini">Aku sudah menunggumu!</span></section><section className="section-heading"><div><p className="overline">EMPAT DUNIA</p><h2>Pilih petualangan</h2></div><button onClick={() => go('subjects')}>Lihat semua <ChevronRight size={18}/></button></section><div className="world-grid">{subjects.map(s=><button className={'world-tile '+s.tone} key={s.id} onClick={() => openSubject(s.id)}><span className="world-mark"><SubjectMark id={s.id}/></span><span><small>{s.world}</small><strong>{s.title}</strong></span><ChevronRight/></button>)}</div><section className="family-mission"><span><Home/></span><div><small>MISI BERSAMA KELUARGA</small><strong>Temukan tiga bentuk lingkaran di rumah</strong></div><ChevronRight/></section></main></>;
 }
 
-function ProgressView({ profile, onEdit }: { profile: ChildProfile; onEdit: () => void }) {
-  return <><TopBar profile={profile} onEdit={onEdit} /><main className="content"><div className="page-title"><p className="eyebrow">Perjalanan {profile.name}</p><h1>Lihat hebatnya kamu!</h1></div><section className="celebration-card"><span className="trophy-blob">🏆</span><div><strong>6 misi selesai!</strong><p>Kobi bangga. Kamu belajar 42 menit minggu ini.</p></div></section><PuzzleReward /><section className="stats-grid"><div><span>⭐</span><strong>240</strong><small>Bintang</small></div><div><span>🔥</span><strong>4 hari</strong><small>Beruntun</small></div><div><span>📖</span><strong>12</strong><small>Cerita dibaca</small></div></section><section className="section-block"><div className="section-heading"><h2>Kekuatan supermu</h2></div><SkillList /></section></main></>;
+function SubjectsView({ profile, openSubject, parent }: { profile:Profile; openSubject:(id:SubjectId)=>void; parent:()=>void }) {
+  return <><Topbar profile={profile} onParent={parent}/><main className="screen"><div className="page-title"><p className="overline">KELAS {profile.grade}</p><h1>Dunia belajar</h1><p>Pilih wilayah yang ingin dijelajahi bersama Kobi.</p></div><div className="world-list">{subjects.map((s,i)=><button className={'world-banner '+s.tone} key={s.id} onClick={() => openSubject(s.id)}><div className="landscape-art"><span/><span/><span/><SubjectMark id={s.id} size={46}/></div><div><small>DUNIA {i+1} · 7 MODUL TERBUKA</small><h2>{s.world}</h2><p>{s.copy}</p></div><span className="banner-go"><ChevronRight/></span></button>)}</div></main></>;
 }
 
-function ParentView({ profile, onEdit, onPremium }: { profile: ChildProfile; onEdit: () => void; onPremium: () => void }) {
-  return <><TopBar profile={profile} onEdit={onEdit} parent /><main className="content parent-view"><div className="page-title parent-heading"><div><p className="eyebrow">Ringkasan minggu ini</p><h1>Perkembangan {profile.name}</h1></div><Button variant="outline" className="edit-profile" onClick={onEdit}><Edit3 size={17} /> Edit profil</Button></div><section className="parent-summary"><div className="ring"><span>78%</span><small>target</small></div><div><h2>Belajar makin konsisten</h2><p>{profile.name} belajar 4 dari 5 hari. Materi disesuaikan untuk Kelas {profile.grade}.</p></div></section><section className="stats-grid parent-stats"><div><span>⏱️</span><strong>42 menit</strong><small>Durasi belajar</small></div><div><span>✅</span><strong>6 modul</strong><small>Diselesaikan</small></div><div><span>📈</span><strong>82%</strong><small>Jawaban tepat</small></div></section><section className="section-block parent-panel"><div className="section-heading"><div><p className="eyebrow">Peta kemampuan</p><h2>Yang tumbuh dan perlu dibantu</h2></div></div><SkillList /></section><section className="recommendation"><span>💡</span><div><small>Rekomendasi di rumah</small><h2>Bermain toko-tokoan 10 menit</h2><p>Ajak {profile.name} menghitung total 2–3 barang untuk menguatkan penjumlahan.</p></div></section><button className="premium-banner" onClick={onPremium}><span className="crown">👑</span><span><strong>Buka seluruh petualangan</strong><small>Modul lanjutan, laporan lengkap, dan hadiah baru.</small></span><ChevronRight size={22} /></button></main></>;
+function CreativeView({ profile, parent }: { profile:Profile; parent:()=>void }) {
+  const items=[{title:'Studio Bentuk',copy:'Bangun gambar dari bentuk sederhana',icon:Shapes,tone:'coral'},{title:'Cerita Pilihan',copy:'Tentukan jalan cerita bersama Kobi',icon:BookOpenText,tone:'blue'},{title:'Kebun Kecil',copy:'Eksperimen aman bersama keluarga',icon:Leaf,tone:'green'}];
+  return <><Topbar profile={profile} onParent={parent}/><main className="screen"><div className="page-title"><p className="overline">RUANG KREATIF</p><h1>Buat sesukamu</h1><p>Di sini tidak ada jawaban salah.</p></div><section className="creative-stage"><div><span className="micro-pill"><WandSparkles size={16}/> Pilihan Kobi</span><h2>Kota dari<br/>berbagai bentuk</h2><p>Susun, putar, lalu ceritakan kota buatanmu.</p><button><Palette/> Mulai berkarya</button></div><div className="art-shapes"><i/><i/><i/><i/></div></section><div className="activity-list">{items.map(({title,copy,icon:Icon,tone})=><button key={title} className={tone}><span><Icon/></span><span><strong>{title}</strong><small>{copy}</small></span><ChevronRight/></button>)}</div><p className="safe-note"><ShieldCheck/> Eksperimen rumah dilakukan bersama orang tua.</p></main></>;
 }
 
-function LessonView({ profile, subject, onBack }: { profile: ChildProfile; subject: SubjectName; onBack: () => void }) {
-  const [answer, setAnswer] = useState<string | null>(null); const question = lessonBank[profile.grade][subject]; const correct = answer === question.correct;
-  return <main className="lesson-view"><header className="lesson-header"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Kembali"><ArrowLeft /></Button><Meter value={20} /><span>1/5</span></header><section className="lesson-card"><div className="kobi-mini"><img src="/assets/zeka-mascot.png" alt="Kobi" /><span>Aku bantu, ya!</span></div><p className="eyebrow">{subject} · Kelas {profile.grade}</p><h1>{question.prompt}</h1><button className="sound-button">🔊 Dengarkan</button><div className="answer-grid">{question.options.map((item) => <Button key={item} variant="outline" className={`answer-button ${answer === item ? (item === question.correct ? 'correct' : 'wrong') : ''}`} onClick={() => setAnswer(item)}>{item}</Button>)}</div>{answer && <div className={`feedback ${correct ? 'positive' : 'try-again'}`} role="status"><span>{correct ? '🌟' : '💛'}</span><div><strong>{correct ? 'Hebat, jawabanmu tepat!' : 'Hampir! Coba sekali lagi.'}</strong><p>{correct ? question.hint : 'Salah itu bagian dari belajar. Kobi tetap menemanimu.'}</p></div></div>}<Button className="big-primary lesson-next" disabled={!correct} onClick={onBack}>Lanjutkan <ChevronRight size={19} /></Button></section></main>;
+function CollectionView({ profile, parent }: { profile:Profile; parent:()=>void }) {
+  return <><Topbar profile={profile} onParent={parent}/><main className="screen collection-screen"><div className="page-title"><p className="overline">KOLEKSI {profile.name.toUpperCase()}</p><h1>Album penemuan</h1><p>Setiap usaha membuka bagian cerita baru.</p></div><section className="puzzle-book"><div className="puzzle-copy"><span className="micro-pill"><Star size={16} fill="currentColor"/> 240 bintang</span><h2>Kobi dan<br/>Pulau Awan</h2><p>3 dari 6 potongan telah ditemukan.</p><div className="piece-rail"><i style={{width:'50%'}}/></div></div><div className="puzzle-art">{Array.from({length:6},(_,i)=><span className={i<3?'found':''} key={i}>{i<3?<Sparkles/>:<LockKeyhole/>}</span>)}</div></section><section className="quiet-panel"><span><Flower2/></span><div><small>PENCAPAIAN TERBARU</small><strong>Berani mencoba lagi</strong><p>Kamu melanjutkan setelah jawaban pertama belum tepat.</p></div></section></main></>;
 }
 
-function BottomNav({ view, setView }: { view: View; setView: (view: View) => void }) {
-  const items = [{ id: 'home' as View, label: 'Beranda', icon: Home, color: 'blue' }, { id: 'explore' as View, label: 'Pelajaran', icon: Map, color: 'yellow' }, { id: 'creative' as View, label: 'Kreatif', icon: Palette, color: 'green' }, { id: 'progress' as View, label: 'Koleksiku', icon: Puzzle, color: 'coral' }];
-  return <nav className="bottom-nav" aria-label="Navigasi utama">{items.map(({ id, label, icon: Icon, color }) => <Button key={id} variant="ghost" className={view === id ? `active ${color}` : color} onClick={() => setView(id)}><span className="nav-icon"><Icon size={27} strokeWidth={2.6} /></span><span>{label}</span></Button>)}</nav>;
+function ModulesView({ profile, subject, back, play, premium }: {profile:Profile;subject:SubjectId;back:()=>void;play:()=>void;premium:()=>void}) {
+  const s=subjects.find(x=>x.id===subject)!;
+  return <main className={'path-screen '+s.tone}><header className="path-top"><button onClick={back}><ArrowLeft/></button><Logo/><span>Kelas {profile.grade}</span></header><section className="path-title"><div className="path-emblem"><SubjectMark id={subject} size={43}/></div><div><p className="overline">JALUR PETUALANGAN</p><h1>{s.world}</h1><p>{s.copy}</p></div></section><section className="journey"><div className="trail"/>{moduleNames.map((name,i)=>{const open=i<7;return <button className={'journey-stop '+(open?'open':'locked')+(i===0?' current':'')} key={name} onClick={open?play:premium}><span className="stop-dot">{open?i+1:<LockKeyhole/>}</span><span><small>{open?'MODUL '+(i+1):'PAKET LENGKAP'}</small><strong>{name}</strong>{i===0&&<em>Lanjutkan dari sini</em>}</span>{open?<ChevronRight/>:<Crown/>}</button>})}<img src="/assets/zeka-mascot.png" alt="Kobi di jalur petualangan"/></section></main>;
 }
 
-function PremiumDialog({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
-  const [requested, setRequested] = useState(false); return <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setRequested(false); }}><DialogContent className="premium-dialog"><DialogHeader><span className="dialog-crown">👑</span><DialogTitle>Petualangan berikutnya menunggu!</DialogTitle><DialogDescription>Tujuh modul pertama tetap gratis. Paket lengkap membuka modul 8 dan seterusnya.</DialogDescription></DialogHeader><ul><li><Check size={19} /> Semua modul di 4 mata pelajaran</li><li><Check size={19} /> Tantangan sesuai kemampuan anak</li><li><Check size={19} /> Puzzle dan hadiah baru</li><li><ShieldCheck size={19} /> Tanpa iklan dan chat publik</li></ul>{requested ? <div className="payment-note"><Check size={21} /><span><strong>Siap dilanjutkan</strong>Alur pembayaran aman orang tua akan dibuka di tahap berikutnya.</span></div> : <Button className="premium-cta" onClick={() => setRequested(true)}>Lihat paket lengkap</Button>}<p className="fine-print">Pembelian hanya dapat dilakukan oleh orang tua.</p></DialogContent></Dialog>;
+function LessonView({ profile, subject, exit, finish }: {profile:Profile;subject:SubjectId;exit:()=>void;finish:()=>void}) {
+  const questions=questionsFor(subject,profile.grade); const [index,setIndex]=useState(0); const [selected,setSelected]=useState(''); const q=questions[index]; const right=selected===q.answer;
+  const next=()=>{if(index===questions.length-1)finish();else{setIndex(index+1);setSelected('')}};
+  return <main className="activity-screen"><header className="activity-top"><button className="round-back" onClick={exit}><ArrowLeft/></button><div className="progress-rail"><i style={{width:((index+1)/questions.length*100)+'%'}}/></div><b>{index+1}/{questions.length}</b></header><section className="question-card"><div className="kobi-guide"><img src="/assets/zeka-mascot.png" alt="Kobi"/><span>{selected?(right?'Wah, tepat sekali!':'Coba lihat petunjukku.'): 'Aku menemanimu.'}</span></div><p className="overline">{subjects.find(s=>s.id===subject)!.title} · KELAS {profile.grade}</p><h1>{q.prompt}</h1><button className="listen-button"><Volume2/> Dengarkan</button><div className="choice-stack">{q.options.map(option=><button key={option} className={selected===option?(option===q.answer?'correct':'wrong'):''} onClick={()=>setSelected(option)}><span>{option}</span>{selected===option&&right?<Check/>:<ChevronRight/>}</button>)}</div>{selected&&<div className={'feedback-card '+(right?'success':'gentle')}><Lightbulb/><div><strong>{right?'Hebat! Kamu menemukannya.':'Belum tepat, dan itu tidak apa-apa.'}</strong><p>{right?q.hint:'Petunjuk: '+q.hint}</p></div></div>}<Button className="primary-big" disabled={!right} onClick={next}>{index===questions.length-1?'Selesaikan modul':'Lanjut'} <ChevronRight/></Button></section></main>;
 }
 
-export default function HomePage() {
-  const [ready, setReady] = useState(false); const [profile, setProfile] = useState<ChildProfile | null>(null); const [view, setView] = useState<View>('home'); const [subject, setSubject] = useState<SubjectName>('Bahasa Indonesia'); const [premiumOpen, setPremiumOpen] = useState(false); const [editOpen, setEditOpen] = useState(false);
-  useEffect(() => { const saved = localStorage.getItem('zeka-child-profile'); if (saved) { try { setProfile(JSON.parse(saved)); } catch {} } setReady(true); }, []);
-  const saveProfile = (next: ChildProfile) => { localStorage.setItem('zeka-child-profile', JSON.stringify(next)); setProfile(next); setEditOpen(false); setView('home'); };
-  const openSubject = (next: SubjectName) => { setSubject(next); setView('modules'); };
-  useEffect(() => { type ModelContext = { registerTool: (tool: object, options: { signal: AbortSignal }) => void | Promise<void> }; const context = (document as Document & { modelContext?: ModelContext }).modelContext; if (!context?.registerTool) return; const lifecycle = new AbortController(); void Promise.resolve(context.registerTool({ name: 'start_learning_session', title: 'Mulai sesi belajar', description: 'Membuka jalur belajar gratis sesuai profil kelas anak.', inputSchema: { type: 'object', properties: { subject: { type: 'string', enum: subjects.map((item) => item.name) } }, required: ['subject'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute(input: { subject: SubjectName }) { if (!subjects.some((item) => item.name === input.subject)) throw new Error('Mata pelajaran tidak tersedia.'); setSubject(input.subject); setView('modules'); return { status: 'opened', subject: input.subject, freeModules: 7 }; } }, { signal: lifecycle.signal })).catch(() => undefined); return () => lifecycle.abort(); }, []);
-  if (!ready) return <div className="splash"><Logo /><span>Menyiapkan petualangan...</span></div>;
-  if (!profile) return <Onboarding onSave={saveProfile} />;
+function ParentView({profile,edit,back,premium}:{profile:Profile;edit:()=>void;back:()=>void;premium:()=>void}) {
+  const skills=[['Membaca dan memahami',76,'Makin lancar'],['Berhitung dan logika',48,'Perlu ditemani'],['Berani mencoba',82,'Berkembang baik']];
+  return <main className="parent-screen"><header><button onClick={back}><ArrowLeft/></button><div><small>RUANG ORANG TUA</small><b>Perkembangan {profile.name}</b></div><button onClick={edit}><Edit3/></button></header><div className="parent-content"><section className="parent-story"><div><p>RINGKASAN MINGGU INI</p><h1>{profile.name} sedang membangun kebiasaan belajar yang baik.</h1><span>4 dari 5 hari belajar · 42 menit</span></div><div className="progress-orb"><b>78%</b><small>target</small></div></section><section className="parent-section"><div className="section-heading"><div><p className="overline">PETA KEMAMPUAN</p><h2>Yang tumbuh dan perlu dibantu</h2></div></div><div className="skill-list">{skills.map(([name,value,status],i)=><div className="skill-row" key={String(name)}><span className={'skill-symbol s'+i}>{i===0?<BookOpenText/>:i===1?<Shapes/>:<Sparkles/>}</span><div><span><strong>{name}</strong><small>{status}</small></span><div className="skill-track"><i style={{width:String(value)+'%'}}/></div></div><b>{value}%</b></div>)}</div></section><section className="home-tip"><span><Home/></span><div><small>COBA DI RUMAH</small><h2>Bermain toko-tokoan 10 menit</h2><p>Ajak {profile.name} menghitung harga dua atau tiga barang.</p></div></section><button className="parent-premium" onClick={premium}><span><Crown/></span><span><strong>Buka seluruh petualangan</strong><small>Modul 8 dan seterusnya di empat mata pelajaran</small></span><ChevronRight/></button></div></main>;
+}
+
+function BottomNav({view,go}:{view:View;go:(v:View)=>void}) {
+  const items=[{id:'home' as View,label:'Beranda',icon:Home},{id:'subjects' as View,label:'Pelajaran',icon:Compass},{id:'creative' as View,label:'Kreatif',icon:Palette},{id:'collection' as View,label:'Koleksiku',icon:Puzzle}];
+  return <nav className="bottom-nav">{items.map(({id,label,icon:Icon})=><button className={view===id?'active':''} onClick={()=>go(id)} key={id}><span><Icon/></span><b>{label}</b></button>)}</nav>;
+}
+
+function ParentGate({open,close,enter}:{open:boolean;close:()=>void;enter:()=>void}) {
+  const [answer,setAnswer]=useState(''); const [error,setError]=useState(false);
+  const submit=(e:FormEvent)=>{e.preventDefault();if(answer==='13'){setAnswer('');setError(false);enter()}else setError(true)};
+  return <Dialog open={open} onOpenChange={v=>!v&&close()}><DialogContent className="gate-dialog"><DialogHeader><span className="gate-icon"><ShieldCheck/></span><DialogTitle>Ruang orang tua</DialogTitle><DialogDescription>Jawab pertanyaan sederhana ini agar anak tidak masuk tanpa sengaja.</DialogDescription></DialogHeader><form onSubmit={submit}><Label htmlFor="adult">Berapa 6 + 7?</Label><Input id="adult" inputMode="numeric" value={answer} onChange={e=>setAnswer(e.target.value)} placeholder="Ketik jawaban"/>{error&&<p>Jawabannya belum tepat.</p>}<Button type="submit" className="primary-big">Masuk</Button></form></DialogContent></Dialog>;
+}
+
+function PremiumDialog({open,close}:{open:boolean;close:()=>void}) {
+  return <Dialog open={open} onOpenChange={v=>!v&&close()}><DialogContent className="premium-dialog"><DialogHeader><span className="premium-icon"><Crown/></span><DialogTitle>Buka semua dunia Zeka123</DialogTitle><DialogDescription>Tujuh modul pertama di setiap mata pelajaran tetap terbuka. Paket keluarga membuka modul 8 dan seterusnya.</DialogDescription></DialogHeader><div className="benefit-list"><span><Check/> Empat jalur belajar lengkap</span><span><Check/> Penyesuaian tingkat kesulitan</span><span><Check/> Koleksi cerita dan puzzle baru</span><span><ShieldCheck/> Tanpa iklan dan chat publik</span></div><Button className="primary-big">Lihat paket keluarga</Button><small className="purchase-note">Pembelian hanya dilakukan di ruang orang tua.</small></DialogContent></Dialog>;
+}
+
+export default function HomePage(){
+  const [ready,setReady]=useState(false); const [profile,setProfile]=useState<Profile|null>(null); const [view,setView]=useState<View>('home'); const [subject,setSubject]=useState<SubjectId>('indo'); const [gate,setGate]=useState(false); const [edit,setEdit]=useState(false); const [premium,setPremium]=useState(false); const [complete,setComplete]=useState(false);
+  useEffect(()=>{const saved=localStorage.getItem('zeka-child-profile');if(saved)try{setProfile(JSON.parse(saved))}catch{}setReady(true)},[]);
+  const save=(p:Profile)=>{localStorage.setItem('zeka-child-profile',JSON.stringify(p));localStorage.setItem('zeka-assessment-done','true');setProfile(p);setEdit(false);setView('home')};
+  const openSubject=(id:SubjectId)=>{setSubject(id);setView('modules')};
+  const enterParent=()=>{setGate(false);setView('parent')};
+  if(!ready)return <div className="splash"><Logo/><span>Menyiapkan dunia Kobi...</span></div>;
+  if(!profile)return <Onboarding onComplete={save}/>;
+  if(complete)return <main className="finish-screen"><div><img src="/assets/zeka-mascot.png" alt="Kobi"/><p className="overline">MODUL SELESAI</p><h1>Satu penemuan baru!</h1><p>Kamu sudah mencoba lima tantangan. Sekarang mata dan tubuhmu boleh beristirahat.</p><div className="earned"><Star fill="currentColor"/> +20 bintang</div><Button className="primary-big" onClick={()=>{setComplete(false);setView('home')}}>Kembali ke beranda</Button></div></main>;
   return <div className="app-shell">
-    {view === 'home' && <HomeView profile={profile} onEdit={() => setView('parent')} onSubject={openSubject} onExplore={() => setView('explore')} />}
-    {view === 'explore' && <ExploreView profile={profile} onEdit={() => setView('parent')} onSubject={openSubject} />}
-    {view === 'creative' && <CreativeView profile={profile} onParent={() => setView('parent')} />}
-    {view === 'progress' && <ProgressView profile={profile} onEdit={() => setView('parent')} />}
-    {view === 'parent' && <ParentView profile={profile} onEdit={() => setEditOpen(true)} onPremium={() => setPremiumOpen(true)} />}
-    {view === 'modules' && <ModulesView profile={profile} subjectName={subject} onBack={() => setView('explore')} onLesson={() => setView('lesson')} onPremium={() => setPremiumOpen(true)} />}
-    {view === 'lesson' && <LessonView profile={profile} subject={subject} onBack={() => setView('modules')} />}
-    {!['modules','lesson'].includes(view) && <BottomNav view={view} setView={setView} />}
-    <Dialog open={editOpen} onOpenChange={setEditOpen}><DialogContent className="edit-dialog"><ProfileForm initial={profile} onSave={saveProfile} title="Edit profil anak" /></DialogContent></Dialog>
-    <PremiumDialog open={premiumOpen} setOpen={setPremiumOpen} />
+    {view==='home'&&<HomeView profile={profile} openSubject={openSubject} go={setView} parent={()=>setGate(true)}/>}
+    {view==='subjects'&&<SubjectsView profile={profile} openSubject={openSubject} parent={()=>setGate(true)}/>}
+    {view==='creative'&&<CreativeView profile={profile} parent={()=>setGate(true)}/>}
+    {view==='collection'&&<CollectionView profile={profile} parent={()=>setGate(true)}/>}
+    {view==='modules'&&<ModulesView profile={profile} subject={subject} back={()=>setView('subjects')} play={()=>setView('lesson')} premium={()=>setPremium(true)}/>}
+    {view==='lesson'&&<LessonView profile={profile} subject={subject} exit={()=>setView('modules')} finish={()=>setComplete(true)}/>}
+    {view==='parent'&&<ParentView profile={profile} edit={()=>setEdit(true)} back={()=>setView('home')} premium={()=>setPremium(true)}/>}
+    {['home','subjects','creative','collection'].includes(view)&&<BottomNav view={view} go={setView}/>}
+    <ParentGate open={gate} close={()=>setGate(false)} enter={enterParent}/>
+    <Dialog open={edit} onOpenChange={setEdit}><DialogContent className="edit-dialog"><DialogHeader><DialogTitle>Edit profil anak</DialogTitle><DialogDescription>Materi berikutnya akan mengikuti kelas yang dipilih.</DialogDescription></DialogHeader><EditForm profile={profile} save={save}/></DialogContent></Dialog>
+    <PremiumDialog open={premium} close={()=>setPremium(false)}/>
   </div>;
+}
+
+function EditForm({profile,save}:{profile:Profile;save:(p:Profile)=>void}){
+  const [next,setNext]=useState(profile); const submit=(e:FormEvent)=>{e.preventDefault();save(next)};
+  return <form onSubmit={submit} className="profile-form"><div className="field"><Label htmlFor="edit-name">Nama anak</Label><Input id="edit-name" value={next.name} onChange={e=>setNext({...next,name:e.target.value})}/></div><div className="field"><Label htmlFor="edit-grade">Jenjang</Label><NativeSelect id="edit-grade" value={next.grade} onChange={e=>setNext({...next,grade:e.target.value as Grade})}>{['1','2','3'].map(x=><NativeSelectOption key={x} value={x}>Kelas {x} SD</NativeSelectOption>)}</NativeSelect></div><Button type="submit" className="primary-big">Simpan perubahan</Button></form>;
 }
