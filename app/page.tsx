@@ -26,14 +26,14 @@ const subjects = [
   { id: 'science' as SubjectId, title: 'Sains & Dunia Sekitar', world: 'Rimba Penemuan', copy: 'Amati alam di dekatmu', tone: 'green' },
 ];
 
-const moduleNames = ['Gerbang Kenalan','Jejak Pertama','Jembatan Coba','Pondok Cerita','Bukit Tantangan','Danau Latihan','Menara Kejutan','Gua Rahasia','Puncak Hebat','Festival Akhir'];
+const moduleThemes: Record<SubjectId, string[]> = { indo:['Bunyi dan Huruf','Kata di Sekitarku','Kalimat Kecil','Cerita Keluarga','Tanda dan Makna','Kampung Dongeng','Pesan Rahasia','Jelajah Bacaan','Penulis Cilik','Festival Cerita'], math:['Angka di Sekitar','Tambah dan Kurang','Bentuk Ajaib','Ukur dan Bandingkan','Pola Rahasia','Pasar Berhitung','Bagi Sama Rata','Waktu dan Uang','Teka-teki Angka','Festival Logika'], english:['Hello, Friends','My Family','Colors Around Me','At Home','Food and Drinks','My Day','Animals','Feelings','Let’s Go','Story Time'], science:['Makhluk Hidup','Tubuhku','Tumbuhan','Hewan di Sekitar','Benda dan Bahan','Cuaca','Bumi dan Langit','Gerak dan Gaya','Jaga Lingkungan','Festival Penemuan'] }; function moduleNamesFor(subject:SubjectId,grade:Grade){const phase=grade==='1'?['Kenalan','Coba Bersama','Aku Bisa']:grade==='2'?['Temukan','Latihan','Tantangan']:['Selidiki','Pecahkan','Jelaskan'];return Array.from({length:30},(_,i)=>phase[Math.floor(i/10)]+': '+moduleThemes[subject][i%10])}
 
 function SubjectMark({ id, size = 34 }: { id: SubjectId; size?: number }) {
   const Icon = id === 'indo' ? BookOpenText : id === 'math' ? Shapes : id === 'english' ? Languages : Microscope;
-  return <Icon size={size} strokeWidth={2.4} />;
+  return <span className={'subject-mark-inner '+id}><Icon size={size} strokeWidth={2.4} />{id==='english'&&<b>ABC</b>}</span>;
 }
 
-function questionsFor(subject: SubjectId, grade: Grade): Question[] {
+function baseQuestionsFor(subject: SubjectId, grade: Grade): Question[] {
   if (subject === 'math') {
     if (grade === '1') return [
       { prompt:'Ada 24 kelereng. Ditambah 5, jadi berapa?', options:['19','29','35'], answer:'29', hint:'Mulai dari 24, maju lima langkah.' },
@@ -80,6 +80,33 @@ function questionsFor(subject: SubjectId, grade: Grade): Question[] {
   ];
 }
 
+function questionsFor(subject: SubjectId, grade: Grade, moduleIndex: number): Question[] {
+  const levelQuestion: Record<Grade, Record<SubjectId, Question>> = {
+    '1': {
+      indo:{prompt:'Suku kata awal pada “mata” adalah...',options:['ma','ta','at'],answer:'ma',hint:'Ucapkan perlahan: ma-ta.'},
+      math:{prompt:'Seperempat dari 12 adalah...',options:['2','3','4'],answer:'3',hint:'Bagi 12 menjadi empat kelompok sama banyak.'},
+      english:{prompt:'Which word means “buku”?',options:['Book','Ball','Bag'],answer:'Book',hint:'Book artinya buku.'},
+      science:{prompt:'Indra untuk mendengar adalah...',options:['Telinga','Mata','Hidung'],answer:'Telinga',hint:'Telinga membantu kita mendengar.'}
+    },
+    '2': {
+      indo:{prompt:'Lawan kata “tinggi” adalah...',options:['Rendah','Panjang','Besar'],answer:'Rendah',hint:'Tinggi dan rendah memiliki arti berlawanan.'},
+      math:{prompt:'45 dibagi 5 sama dengan...',options:['8','9','10'],answer:'9',hint:'Lima kali sembilan adalah 45.'},
+      english:{prompt:'Complete: “I have two ...”',options:['books','book','bookes'],answer:'books',hint:'Gunakan bentuk jamak books.'},
+      science:{prompt:'Hewan yang mengalami metamorfosis adalah...',options:['Kupu-kupu','Kucing','Ayam'],answer:'Kupu-kupu',hint:'Kupu-kupu berubah melalui beberapa tahap.'}
+    },
+    '3': {
+      indo:{prompt:'Gagasan utama adalah...',options:['Inti sebuah paragraf','Tanda baca','Nama pengarang'],answer:'Inti sebuah paragraf',hint:'Gagasan utama merangkum bagian terpenting paragraf.'},
+      math:{prompt:'Pecahan terbesar adalah...',options:['1/5','1/3','1/2'],answer:'1/2',hint:'Penyebut terkecil memberi bagian terbesar.'},
+      english:{prompt:'Complete: “They are ... football.”',options:['playing','plays','play'],answer:'playing',hint:'Gunakan are playing.'},
+      science:{prompt:'Gaya yang menarik benda ke bumi adalah...',options:['Gravitasi','Magnet','Gesekan'],answer:'Gravitasi',hint:'Gravitasi menarik benda menuju bumi.'}
+    }
+  };
+  const bank = [levelQuestion[grade][subject], ...baseQuestionsFor(subject, grade)];
+  const count = 5 + (moduleIndex % 4);
+  const start = (moduleIndex * 2) % bank.length;
+  return Array.from({length:count},(_,index)=>bank[(start+index)%bank.length]);
+}
+
 function Logo() {
   return <div className="brand" aria-label="Zeka123"><img src="/assets/zeka-wordmark.png" alt="ZEKA" /><span className="brand-number"><i>1</i><i>2</i><i>3</i></span></div>;
 }
@@ -107,12 +134,12 @@ function Topbar({ profile, onParent }: { profile: Profile; onParent: () => void 
   return <header className="topbar"><Logo/><button className="profile-chip" onClick={onParent}><span>{profile.name.charAt(0).toUpperCase()}</span><span><small>Petualang</small><b>{profile.name}</b></span><ChevronRight size={18}/></button></header>;
 }
 
-function HomeView({ profile, openSubject, go, parent }: { profile:Profile; openSubject:(id:SubjectId)=>void; go:(v:View)=>void; parent:()=>void }) {
-  return <><Topbar profile={profile} onParent={parent}/><main className="screen home-screen"><section className="hello-strip"><div><p>Halo, {profile.name}!</p><h1>Mau bertualang<br/>ke mana hari ini?</h1></div><span className="level-badge">Kelas {profile.grade}</span></section><section className="continue-world"><span className="sun"/><div className="continue-copy"><span className="micro-pill"><Clock3 size={16}/> sekitar 10 menit</span><p>LANJUTKAN CERITA</p><h2>Misteri Kata<br/>di Tepi Sungai</h2><button onClick={() => openSubject('indo')}><Play size={21} fill="currentColor"/> Mulai</button></div><img src="/assets/zeka-mascot.png" alt="Kobi mengajak belajar"/><span className="speech-mini">Aku sudah menunggumu!</span></section><section className="section-heading"><div><p className="overline">EMPAT DUNIA</p><h2>Pilih petualangan</h2></div><button onClick={() => go('subjects')}>Lihat semua <ChevronRight size={18}/></button></section><div className="world-grid">{subjects.map(s=><button className={'world-tile '+s.tone} key={s.id} onClick={() => openSubject(s.id)}><span className="world-mark"><SubjectMark id={s.id}/></span><span><small>{s.world}</small><strong>{s.title}</strong></span><ChevronRight/></button>)}</div><section className="family-mission"><span><Home/></span><div><small>MISI BERSAMA KELUARGA</small><strong>Temukan tiga bentuk lingkaran di rumah</strong></div><ChevronRight/></section></main></>;
+function HomeView({ profile, openSubject, go, parent, changeGrade }: { profile:Profile; openSubject:(id:SubjectId)=>void; go:(v:View)=>void; parent:()=>void; changeGrade:()=>void }) {
+  return <><Topbar profile={profile} onParent={parent}/><main className="screen home-screen"><section className="hello-strip"><div><p>Halo, {profile.name}!</p><h1>Mau bertualang<br/>ke mana hari ini?</h1></div><button className="level-badge" onClick={changeGrade} aria-label="Ubah jenjang melalui kontrol orang tua"><span>Kelas {profile.grade}</span><ChevronRight size={17}/></button></section><section className="continue-world"><span className="sun"/><div className="continue-copy"><span className="micro-pill"><Clock3 size={16}/> sekitar 10 menit</span><p>LANJUTKAN CERITA</p><h2>Misteri Kata<br/>di Tepi Sungai</h2><button onClick={() => openSubject('indo')}><Play size={21} fill="currentColor"/> Mulai</button></div><img src="/assets/zeka-mascot.png" alt="Kobi mengajak belajar"/><span className="speech-mini">Aku sudah menunggumu!</span></section><section className="section-heading"><div><p className="overline">EMPAT DUNIA</p><h2>Pilih petualangan</h2></div><button onClick={() => go('subjects')}>Lihat semua <ChevronRight size={18}/></button></section><div className="world-grid">{subjects.map(s=><button className={'world-tile '+s.tone} key={s.id} onClick={() => openSubject(s.id)}><span className="world-mark"><SubjectMark id={s.id}/></span><span><small>{s.world}</small><strong>{s.title}</strong></span><ChevronRight/></button>)}</div><section className="family-mission"><span><Home/></span><div><small>MISI BERSAMA KELUARGA</small><strong>Temukan tiga bentuk lingkaran di rumah</strong></div><ChevronRight/></section></main></>;
 }
 
 function SubjectsView({ profile, openSubject, parent }: { profile:Profile; openSubject:(id:SubjectId)=>void; parent:()=>void }) {
-  return <><Topbar profile={profile} onParent={parent}/><main className="screen"><div className="page-title"><p className="overline">KELAS {profile.grade}</p><h1>Dunia belajar</h1><p>Pilih wilayah yang ingin dijelajahi bersama Kobi.</p></div><div className="world-list">{subjects.map((s,i)=><button className={'world-banner '+s.tone} key={s.id} onClick={() => openSubject(s.id)}><div className="landscape-art"><span/><span/><span/><SubjectMark id={s.id} size={46}/></div><div><small>DUNIA {i+1} · 7 MODUL TERBUKA</small><h2>{s.world}</h2><p>{s.copy}</p></div><span className="banner-go"><ChevronRight/></span></button>)}</div></main></>;
+  return <><Topbar profile={profile} onParent={parent}/><main className="screen"><div className="page-title"><p className="overline">KELAS {profile.grade}</p><h1>Dunia belajar</h1><p>Pilih wilayah yang ingin dijelajahi bersama Kobi.</p></div><div className="world-list">{subjects.map((s,i)=><button className={'world-banner '+s.tone} key={s.id} onClick={() => openSubject(s.id)}><div className="landscape-art"><span/><span/><span/><SubjectMark id={s.id} size={46}/></div><div><small>DUNIA {i+1} · 30 POS · 7 TERBUKA</small><h2>{s.world}</h2><p>{s.copy}</p></div><span className="banner-go"><ChevronRight/></span></button>)}</div></main></>;
 }
 
 function CreativeView({ profile, parent }: { profile:Profile; parent:()=>void }) {
@@ -124,13 +151,13 @@ function CollectionView({ profile, parent }: { profile:Profile; parent:()=>void 
   return <><Topbar profile={profile} onParent={parent}/><main className="screen collection-screen"><div className="page-title"><p className="overline">KOLEKSI {profile.name.toUpperCase()}</p><h1>Album penemuan</h1><p>Setiap usaha membuka bagian cerita baru.</p></div><section className="puzzle-book"><div className="puzzle-copy"><span className="micro-pill"><Star size={16} fill="currentColor"/> 240 bintang</span><h2>Kobi dan<br/>Pulau Awan</h2><p>3 dari 6 potongan telah ditemukan.</p><div className="piece-rail"><i style={{width:'50%'}}/></div></div><div className="puzzle-art">{Array.from({length:6},(_,i)=><span className={i<3?'found':''} key={i}>{i<3?<Sparkles/>:<LockKeyhole/>}</span>)}</div></section><section className="quiet-panel"><span><Flower2/></span><div><small>PENCAPAIAN TERBARU</small><strong>Berani mencoba lagi</strong><p>Kamu melanjutkan setelah jawaban pertama belum tepat.</p></div></section></main></>;
 }
 
-function ModulesView({ profile, subject, back, play, premium }: {profile:Profile;subject:SubjectId;back:()=>void;play:()=>void;premium:()=>void}) {
-  const s=subjects.find(x=>x.id===subject)!;
-  return <main className={'path-screen '+s.tone}><header className="path-top"><button onClick={back}><ArrowLeft/></button><Logo/><span>Kelas {profile.grade}</span></header><section className="path-title"><div className="path-emblem"><SubjectMark id={subject} size={43}/></div><div><p className="overline">JALUR PETUALANGAN</p><h1>{s.world}</h1><p>{s.copy}</p></div></section><section className="journey"><div className="trail"/>{moduleNames.map((name,i)=>{const open=i<7;return <button className={'journey-stop '+(open?'open':'locked')+(i===0?' current':'')} key={name} onClick={open?play:premium}><span className="stop-dot">{open?i+1:<LockKeyhole/>}</span><span><small>{open?'MODUL '+(i+1):'PAKET LENGKAP'}</small><strong>{name}</strong>{i===0&&<em>Lanjutkan dari sini</em>}</span>{open?<ChevronRight/>:<Crown/>}</button>})}<img src="/assets/zeka-mascot.png" alt="Kobi di jalur petualangan"/></section></main>;
+function ModulesView({ profile, subject, back, play, premium }: {profile:Profile;subject:SubjectId;back:()=>void;play:(index:number)=>void;premium:()=>void}) {
+  const s=subjects.find(x=>x.id===subject)!; const modules=moduleNamesFor(subject,profile.grade);
+  return <main className={'path-screen '+s.tone}><header className="path-top"><button onClick={back}><ArrowLeft/></button><Logo/><span>Kelas {profile.grade} · 30 pos</span></header><section className="path-title"><div className="path-emblem"><SubjectMark id={subject} size={43}/></div><div><p className="overline">JALUR PETUALANGAN</p><h1>{s.world}</h1><p>{s.copy}</p></div></section><section className="journey"><div className="trail"/>{modules.map((name,i)=>{const open=i<7;return <button className={'journey-stop '+(open?'open':'locked')+(i===0?' current':'')} key={name} onClick={open?()=>play(i):premium}><span className="stop-dot">{open?i+1:<LockKeyhole/>}</span><span><small>{open?'MODUL '+(i+1):'PAKET LENGKAP'}</small><strong>{name}</strong>{i===0&&<em>Lanjutkan dari sini</em>}</span>{open?<ChevronRight/>:<Crown/>}</button>})}<img src="/assets/zeka-mascot.png" alt="Kobi di jalur petualangan"/></section></main>;
 }
 
-function LessonView({ profile, subject, exit, finish }: {profile:Profile;subject:SubjectId;exit:()=>void;finish:()=>void}) {
-  const questions=questionsFor(subject,profile.grade); const [index,setIndex]=useState(0); const [selected,setSelected]=useState(''); const q=questions[index]; const right=selected===q.answer;
+function LessonView({ profile, subject, moduleIndex, exit, finish }: {profile:Profile;subject:SubjectId;moduleIndex:number;exit:()=>void;finish:()=>void}) {
+  const questions=questionsFor(subject,profile.grade,moduleIndex); const [index,setIndex]=useState(0); const [selected,setSelected]=useState(''); const q=questions[index]; const right=selected===q.answer;
   const next=()=>{if(index===questions.length-1)finish();else{setIndex(index+1);setSelected('')}};
   return <main className="activity-screen"><header className="activity-top"><button className="round-back" onClick={exit}><ArrowLeft/></button><div className="progress-rail"><i style={{width:((index+1)/questions.length*100)+'%'}}/></div><b>{index+1}/{questions.length}</b></header><section className="question-card"><div className="kobi-guide"><img src="/assets/zeka-mascot.png" alt="Kobi"/><span>{selected?(right?'Wah, tepat sekali!':'Coba lihat petunjukku.'): 'Aku menemanimu.'}</span></div><p className="overline">{subjects.find(s=>s.id===subject)!.title} · KELAS {profile.grade}</p><h1>{q.prompt}</h1><button className="listen-button"><Volume2/> Dengarkan</button><div className="choice-stack">{q.options.map(option=><button key={option} className={selected===option?(option===q.answer?'correct':'wrong'):''} onClick={()=>setSelected(option)}><span>{option}</span>{selected===option&&right?<Check/>:<ChevronRight/>}</button>)}</div>{selected&&<div className={'feedback-card '+(right?'success':'gentle')}><Lightbulb/><div><strong>{right?'Hebat! Kamu menemukannya.':'Belum tepat, dan itu tidak apa-apa.'}</strong><p>{right?q.hint:'Petunjuk: '+q.hint}</p></div></div>}<Button className="primary-big" disabled={!right} onClick={next}>{index===questions.length-1?'Selesaikan modul':'Lanjut'} <ChevronRight/></Button></section></main>;
 }
@@ -145,6 +172,10 @@ function BottomNav({view,go}:{view:View;go:(v:View)=>void}) {
   return <nav className="bottom-nav">{items.map(({id,label,icon:Icon})=><button className={view===id?'active':''} onClick={()=>go(id)} key={id}><span><Icon/></span><b>{label}</b></button>)}</nav>;
 }
 
+function GradeControl({open,profile,close,save}:{open:boolean;profile:Profile;close:()=>void;save:(grade:Grade)=>void}) {
+  return <Dialog open={open} onOpenChange={v=>!v&&close()}><DialogContent className="grade-dialog"><DialogHeader><span className="gate-icon"><UserRound/></span><DialogTitle>Pilih jenjang belajar</DialogTitle><DialogDescription>Jalur modul dan soal akan langsung menyesuaikan kelas yang dipilih.</DialogDescription></DialogHeader><div className="grade-options">{(['1','2','3'] as Grade[]).map(grade=><button key={grade} className={profile.grade===grade?'selected':''} onClick={()=>save(grade)}><span>Kelas {grade} SD</span>{profile.grade===grade?<Check/>:<ChevronRight/>}</button>)}</div><p><ShieldCheck/> Perubahan ini hanya dapat dilakukan setelah kontrol orang tua.</p></DialogContent></Dialog>;
+}
+
 function ParentGate({open,close,enter}:{open:boolean;close:()=>void;enter:()=>void}) {
   const [answer,setAnswer]=useState(''); const [error,setError]=useState(false);
   const submit=(e:FormEvent)=>{e.preventDefault();if(answer==='13'){setAnswer('');setError(false);enter()}else setError(true)};
@@ -156,24 +187,24 @@ function PremiumDialog({open,close}:{open:boolean;close:()=>void}) {
 }
 
 export default function HomePage(){
-  const [ready,setReady]=useState(false); const [profile,setProfile]=useState<Profile|null>(null); const [view,setView]=useState<View>('home'); const [subject,setSubject]=useState<SubjectId>('indo'); const [gate,setGate]=useState(false); const [edit,setEdit]=useState(false); const [premium,setPremium]=useState(false); const [complete,setComplete]=useState(false);
+  const [ready,setReady]=useState(false); const [profile,setProfile]=useState<Profile|null>(null); const [view,setView]=useState<View>('home'); const [subject,setSubject]=useState<SubjectId>('indo'); const [moduleIndex,setModuleIndex]=useState(0); const [gate,setGate]=useState(false); const [gateTarget,setGateTarget]=useState<'parent'|'grade'>('parent'); const [gradeOpen,setGradeOpen]=useState(false); const [edit,setEdit]=useState(false); const [premium,setPremium]=useState(false); const [complete,setComplete]=useState(false);
   useEffect(()=>{const saved=localStorage.getItem('zeka-child-profile');if(saved)try{setProfile(JSON.parse(saved))}catch{}setReady(true)},[]);
   const save=(p:Profile)=>{localStorage.setItem('zeka-child-profile',JSON.stringify(p));localStorage.setItem('zeka-assessment-done','true');setProfile(p);setEdit(false);setView('home')};
   const openSubject=(id:SubjectId)=>{setSubject(id);setView('modules')};
-  const enterParent=()=>{setGate(false);setView('parent')};
+  const requestGate=(target:'parent'|'grade')=>{setGateTarget(target);setGate(true)}; const enterParent=()=>{setGate(false);if(gateTarget==='grade')setGradeOpen(true);else setView('parent')}; const changeGrade=(grade:Grade)=>{save({...profile!,grade});setGradeOpen(false);setView('home')};
   if(!ready)return <div className="splash"><Logo/><span>Menyiapkan dunia Kobi...</span></div>;
   if(!profile)return <Onboarding onComplete={save}/>;
-  if(complete)return <main className="finish-screen"><div><img src="/assets/zeka-mascot.png" alt="Kobi"/><p className="overline">MODUL SELESAI</p><h1>Satu penemuan baru!</h1><p>Kamu sudah mencoba lima tantangan. Sekarang mata dan tubuhmu boleh beristirahat.</p><div className="earned"><Star fill="currentColor"/> +20 bintang</div><Button className="primary-big" onClick={()=>{setComplete(false);setView('home')}}>Kembali ke beranda</Button></div></main>;
+  if(complete)return <main className="finish-screen"><div><img src="/assets/zeka-mascot.png" alt="Kobi"/><p className="overline">MODUL SELESAI</p><h1>Satu penemuan baru!</h1><p>Kamu sudah menyelesaikan semua tantangan di modul ini. Sekarang mata dan tubuhmu boleh beristirahat.</p><div className="earned"><Star fill="currentColor"/> +20 bintang</div><Button className="primary-big" onClick={()=>{setComplete(false);setView('home')}}>Kembali ke beranda</Button></div></main>;
   return <div className="app-shell">
-    {view==='home'&&<HomeView profile={profile} openSubject={openSubject} go={setView} parent={()=>setGate(true)}/>}
-    {view==='subjects'&&<SubjectsView profile={profile} openSubject={openSubject} parent={()=>setGate(true)}/>}
-    {view==='creative'&&<CreativeView profile={profile} parent={()=>setGate(true)}/>}
-    {view==='collection'&&<CollectionView profile={profile} parent={()=>setGate(true)}/>}
-    {view==='modules'&&<ModulesView profile={profile} subject={subject} back={()=>setView('subjects')} play={()=>setView('lesson')} premium={()=>setPremium(true)}/>}
-    {view==='lesson'&&<LessonView profile={profile} subject={subject} exit={()=>setView('modules')} finish={()=>setComplete(true)}/>}
+    {view==='home'&&<HomeView profile={profile} openSubject={openSubject} go={setView} parent={()=>requestGate('parent')} changeGrade={()=>requestGate('grade')}/>}
+    {view==='subjects'&&<SubjectsView profile={profile} openSubject={openSubject} parent={()=>requestGate('parent')}/>}
+    {view==='creative'&&<CreativeView profile={profile} parent={()=>requestGate('parent')}/>}
+    {view==='collection'&&<CollectionView profile={profile} parent={()=>requestGate('parent')}/>}
+    {view==='modules'&&<ModulesView profile={profile} subject={subject} back={()=>setView('subjects')} play={(index)=>{setModuleIndex(index);setView('lesson')}} premium={()=>setPremium(true)}/>}
+    {view==='lesson'&&<LessonView profile={profile} subject={subject} moduleIndex={moduleIndex} exit={()=>setView('modules')} finish={()=>setComplete(true)}/>}
     {view==='parent'&&<ParentView profile={profile} edit={()=>setEdit(true)} back={()=>setView('home')} premium={()=>setPremium(true)}/>}
     {['home','subjects','creative','collection'].includes(view)&&<BottomNav view={view} go={setView}/>}
-    <ParentGate open={gate} close={()=>setGate(false)} enter={enterParent}/>
+    <GradeControl open={gradeOpen} profile={profile} close={()=>setGradeOpen(false)} save={changeGrade}/><ParentGate open={gate} close={()=>setGate(false)} enter={enterParent}/>
     <Dialog open={edit} onOpenChange={setEdit}><DialogContent className="edit-dialog"><DialogHeader><DialogTitle>Edit profil anak</DialogTitle><DialogDescription>Materi berikutnya akan mengikuti kelas yang dipilih.</DialogDescription></DialogHeader><EditForm profile={profile} save={save}/></DialogContent></Dialog>
     <PremiumDialog open={premium} close={()=>setPremium(false)}/>
   </div>;
