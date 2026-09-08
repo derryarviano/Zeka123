@@ -102,7 +102,7 @@ function questionsFor(subject: SubjectId, grade: Grade, moduleIndex: number): Qu
     }
   };
   const bank = [levelQuestion[grade][subject], ...baseQuestionsFor(subject, grade)];
-  const count = 5 + (moduleIndex % 4);
+  const count = 5 + (moduleIndex % 2);
   const start = (moduleIndex * 2) % bank.length;
   return Array.from({length:count},(_,index)=>bank[(start+index)%bank.length]);
 }
