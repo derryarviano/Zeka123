@@ -1,11 +1,11 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import {
   ArrowLeft, BookOpenText, Check, ChevronRight, Clock3, Compass, Crown,
   Edit3, FlaskConical, Flower2, Home, Languages, Leaf, Lightbulb,
   LockKeyhole, Map, Microscope, Palette, Parentheses, Play, Puzzle,
-  ShieldCheck, Shapes, Sparkles, Star, Trees, UserRound, Volume2, WandSparkles
+  ShieldCheck, Shapes, Sparkles, Star, Trees, UserRound, Volume2, VolumeX, WandSparkles
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -182,6 +182,35 @@ function ParentGate({open,close,enter}:{open:boolean;close:()=>void;enter:()=>vo
   return <Dialog open={open} onOpenChange={v=>!v&&close()}><DialogContent className="gate-dialog"><DialogHeader><span className="gate-icon"><ShieldCheck/></span><DialogTitle>Ruang orang tua</DialogTitle><DialogDescription>Jawab pertanyaan sederhana ini agar anak tidak masuk tanpa sengaja.</DialogDescription></DialogHeader><form onSubmit={submit}><Label htmlFor="adult">Berapa 6 + 7?</Label><Input id="adult" inputMode="numeric" value={answer} onChange={e=>setAnswer(e.target.value)} placeholder="Ketik jawaban"/>{error&&<p>Jawabannya belum tepat.</p>}<Button type="submit" className="primary-big">Masuk</Button></form></DialogContent></Dialog>;
 }
 
+function BackgroundMusic({ active }: { active: boolean }) {
+  const audio = useRef<HTMLAudioElement>(null);
+  const [enabled, setEnabled] = useState(true);
+  const [started, setStarted] = useState(false);
+  useEffect(() => {
+    const begin = () => setStarted(true);
+    window.addEventListener('pointerdown', begin, { once: true });
+    return () => window.removeEventListener('pointerdown', begin);
+  }, []);
+  useEffect(() => {
+    const player = audio.current;
+    if (!player) return;
+    player.volume = .22;
+    const sync = () => {
+      if (active && enabled && started && !document.hidden && document.hasFocus()) player.play().catch(() => {});
+      else player.pause();
+    };
+    sync();
+    document.addEventListener('visibilitychange', sync);
+    window.addEventListener('focus', sync);
+    window.addEventListener('blur', sync);
+    return () => {
+      document.removeEventListener('visibilitychange', sync);
+      window.removeEventListener('focus', sync);
+      window.removeEventListener('blur', sync);
+    };
+  }, [active, enabled, started]);
+  return <><audio ref={audio} src="/assets/zeka-bgm.mp3" loop preload="auto"/>{active&&<button className="bgm-toggle" onClick={() => { setStarted(true); setEnabled(value => !value); }} aria-label={enabled?'Matikan musik':'Nyalakan musik'}>{enabled?<Volume2/>:<VolumeX/>}</button>}</>;
+}
 function PremiumDialog({open,close}:{open:boolean;close:()=>void}) {
   return <Dialog open={open} onOpenChange={v=>!v&&close()}><DialogContent className="premium-dialog"><DialogHeader><span className="premium-icon"><Crown/></span><DialogTitle>Buka semua dunia Zeka123</DialogTitle><DialogDescription>Tujuh modul pertama di setiap mata pelajaran tetap terbuka. Paket keluarga membuka modul 8 dan seterusnya.</DialogDescription></DialogHeader><div className="benefit-list"><span><Check/> Empat jalur belajar lengkap</span><span><Check/> Penyesuaian tingkat kesulitan</span><span><Check/> Koleksi cerita dan puzzle baru</span><span><ShieldCheck/> Tanpa iklan dan chat publik</span></div><Button className="primary-big">Lihat paket keluarga</Button><small className="purchase-note">Pembelian hanya dilakukan di ruang orang tua.</small></DialogContent></Dialog>;
 }
@@ -196,6 +225,7 @@ export default function HomePage(){
   if(!profile)return <Onboarding onComplete={save}/>;
   if(complete)return <main className="finish-screen"><div><img src="/assets/zeka-mascot.png" alt="Kobi"/><p className="overline">MODUL SELESAI</p><h1>Satu penemuan baru!</h1><p>Kamu sudah menyelesaikan semua tantangan di modul ini. Sekarang mata dan tubuhmu boleh beristirahat.</p><div className="earned"><Star fill="currentColor"/> +20 bintang</div><Button className="primary-big" onClick={()=>{setComplete(false);setView('home')}}>Kembali ke beranda</Button></div></main>;
   return <div className="app-shell">
+    <BackgroundMusic active={view==='home'}/>
     {view==='home'&&<HomeView profile={profile} openSubject={openSubject} go={setView} parent={()=>requestGate('parent')} changeGrade={()=>requestGate('grade')}/>}
     {view==='subjects'&&<SubjectsView profile={profile} openSubject={openSubject} parent={()=>requestGate('parent')}/>}
     {view==='creative'&&<CreativeView profile={profile} parent={()=>requestGate('parent')}/>}

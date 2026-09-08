@@ -33,3 +33,9 @@
 .level-badge{display:flex;align-items:center;gap:5px;border:2px solid #e3bd29}.level-badge svg{width:16px}
 .grade-dialog{border-radius:28px;padding:24px}.grade-dialog [data-slot=dialog-title]{font-size:1.45rem}.grade-options{display:grid;gap:11px}.grade-options button{min-height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;border:2px solid #d8e1ef;border-radius:18px;background:#fff;color:var(--ink);font-size:16px;font-weight:850;box-shadow:0 4px 0 #e1e6ef}.grade-options button.selected{border-color:var(--blue);background:#e7efff;color:#1d53bc;box-shadow:0 4px 0 #b9ccef}.grade-dialog>p{display:flex;align-items:center;gap:8px;margin:4px 0 0;color:var(--muted);font-size:13px}.grade-dialog>p svg{width:18px}
 .world-tile,.world-banner{outline:2px solid rgba(24,48,94,.12)}.world-tile small,.world-banner small,.world-banner p{color:#33476f}.world-tile .world-mark,.world-banner .landscape-art{background:rgba(255,255,255,.72)}
+
+/* Audio and parent-gate refinements */
+.gate-dialog{background:#f4f7ff!important;opacity:1!important;border:2px solid #b9cdf2!important;box-shadow:0 18px 60px rgba(20,43,88,.28)!important;backdrop-filter:none!important}
+[data-slot="dialog-overlay"]{background:rgba(28,42,70,.5)!important;backdrop-filter:blur(5px)}
+.bgm-toggle{position:fixed;z-index:42;right:18px;top:88px;width:44px;height:44px;display:grid;place-items:center;border:2px solid #c9d9f4;border-radius:15px;background:#fff;color:#245bc7;box-shadow:0 5px 0 #c8d5e9}
+.bgm-toggle svg{width:22px;height:22px}
