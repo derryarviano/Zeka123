@@ -2,9 +2,9 @@
 
 import { FormEvent, useEffect, useState, type CSSProperties } from 'react';
 import {
-  ArrowLeft, BarChart3, BookOpen, Check, ChevronRight, Clock3, Crown, Edit3,
+  ArrowLeft, BarChart3, BookOpen, BookOpenText, Check, ChevronRight, Clock3, Crown, Edit3,
   Flame, Heart, Home, Lightbulb, LockKeyhole, Map, Play, Puzzle, Rocket,
-  ShieldCheck, Star, Timer, Trophy, UserRound,
+  Languages, Microscope, Palette, Shapes, ShieldCheck, Star, Timer, Trophy, UserRound,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select';
 import { Progress, ProgressIndicator, ProgressTrack } from '@/components/ui/progress';
 
-type View = 'home' | 'explore' | 'progress' | 'parent' | 'modules' | 'lesson';
+type View = 'home' | 'explore' | 'creative' | 'progress' | 'parent' | 'modules' | 'lesson';
 type ChildProfile = { name: string; age: string; grade: '1' | '2' | '3' };
 type SubjectName = 'Bahasa Indonesia' | 'Matematika' | 'Bahasa Inggris' | 'Sains & Dunia Sekitar';
 
@@ -60,7 +60,7 @@ function Logo() {
 }
 
 function TopBar({ profile, onEdit, parent = false }: { profile: ChildProfile; onEdit: () => void; parent?: boolean }) {
-  return <header className="topbar"><Logo /><div className="topbar-actions">{!parent && <><div className="streak"><span>🔥</span><b>4</b><small>hari</small></div><div className="points"><span>⭐</span><b>240</b></div></>}<button className="avatar" onClick={onEdit} aria-label="Edit profil anak">{profile.name.charAt(0).toUpperCase()}</button></div></header>;
+  return <header className="topbar"><Logo /><div className="topbar-actions"><button className="avatar" onClick={onEdit} aria-label="Edit profil anak">{profile.name.charAt(0).toUpperCase()}</button></div></header>;
 }
 
 function ProfileForm({ initial, onSave, title = 'Kenalan dulu, yuk!' }: { initial?: ChildProfile; onSave: (profile: ChildProfile) => void; title?: string }) {
@@ -90,24 +90,33 @@ function SubjectIcon({ subject }: { subject: (typeof subjects)[number] }) {
 function HomeView({ profile, onEdit, onSubject, onExplore }: { profile: ChildProfile; onEdit: () => void; onSubject: (subject: SubjectName) => void; onExplore: () => void }) {
   return <><TopBar profile={profile} onEdit={onEdit} /><main className="content home-view">
     <section className="welcome-row"><div><h1>Halo, {profile.name}! <span aria-hidden="true">👋</span></h1><p className="soft-copy">Petualang Kelas {profile.grade}, siap main sambil belajar?</p></div><span className="grade-sticker">Kelas {profile.grade}</span></section>
-    <section className="mission-card"><div className="mission-copy"><div className="pill"><Clock3 size={16} /> Misi 8 menit</div><h2>Tantangan seru<br />menunggumu!</h2><p>Kobi sudah memilih soal sesuai kemampuan Kelas {profile.grade}.</p><Button className="primary-action" onClick={() => onSubject('Bahasa Indonesia')}><Play size={19} fill="currentColor" /> Mulai misi</Button></div><div className="mascot-wrap"><span className="speech">Ayo, {profile.name}!</span><img src="/assets/zeka-mascot.png" alt="Kobi si panda merah" /></div></section>
-    <section className="section-block"><div className="section-heading"><div><p className="eyebrow">Pilih petualangan</p><h2>Mau belajar apa?</h2></div><Button variant="ghost" onClick={onExplore} className="see-all">Lihat semua <ChevronRight size={18} /></Button></div><div className="subject-grid">{subjects.map((subject) => <button key={subject.name} className={`subject-card ${subject.color}`} onClick={() => onSubject(subject.name)}><SubjectIcon subject={subject} /><h3>{subject.name}</h3><p>{subject.description}</p><div className="subject-bottom"><span>5 modul terbuka</span><span className="go-bubble"><ChevronRight size={18} /></span></div></button>)}</div></section>
+    <section className="mission-card"><div className="mission-copy"><div className="pill"><Clock3 size={16} /> Sekitar 10 menit</div><h2>Lanjutkan<br />petualanganmu</h2><p>Satu sesi singkat yang dipilih sesuai kemampuanmu.</p><Button className="primary-action" onClick={() => onSubject('Bahasa Indonesia')}><Play size={19} fill="currentColor" /> Mulai belajar</Button></div><div className="mascot-wrap"><span className="speech">Ayo, {profile.name}!</span><img src="/assets/zeka-mascot.png" alt="Kobi si panda merah" /></div></section>
+    <section className="section-block"><div className="section-heading"><div><p className="eyebrow">Pilih petualangan</p><h2>Mau belajar apa?</h2></div><Button variant="ghost" onClick={onExplore} className="see-all">Lihat semua <ChevronRight size={18} /></Button></div><div className="subject-grid">{subjects.map((subject) => <button key={subject.name} className={`subject-card ${subject.color}`} onClick={() => onSubject(subject.name)}><SubjectIcon subject={subject} /><h3>{subject.name}</h3><p>{subject.description}</p><div className="subject-bottom"><span>7 modul terbuka</span><span className="go-bubble"><ChevronRight size={18} /></span></div></button>)}</div></section>
     <button className="home-activity"><span className="activity-icon">🏠</span><span><strong>Misi keluarga hari ini</strong><small>Cari 3 benda berbentuk lingkaran di rumah</small></span><ChevronRight size={22} /></button>
   </main></>;
 }
 
 function ExploreView({ profile, onEdit, onSubject }: { profile: ChildProfile; onEdit: () => void; onSubject: (subject: SubjectName) => void }) {
-  return <><TopBar profile={profile} onEdit={onEdit} /><main className="content"><div className="page-title"><p className="eyebrow">Untuk Kelas {profile.grade}</p><h1>Pilih dunia belajarmu</h1><p className="soft-copy">Semua mata pelajaran boleh dijelajahi. Lima modul pertama terbuka.</p></div><div className="module-list">{subjects.map((subject) => <button className={`world-card ${subject.color}`} key={subject.name} onClick={() => onSubject(subject.name)}><SubjectIcon subject={subject} /><div><small>5 MODUL GRATIS</small><h2>{subject.name}</h2><p>{subject.description}</p></div><span className="world-arrow"><ChevronRight /></span></button>)}</div><div className="gentle-note"><span>💡</span><p><strong>Tidak perlu terburu-buru.</strong> Kobi menyesuaikan tantangan dari jenjang dan jawabanmu.</p></div></main></>;
+  return <><TopBar profile={profile} onEdit={onEdit} /><main className="content"><div className="page-title"><p className="eyebrow">Untuk Kelas {profile.grade}</p><h1>Pilih dunia belajarmu</h1><p className="soft-copy">Semua mata pelajaran boleh dijelajahi. Tujuh modul pertama terbuka.</p></div><div className="module-list">{subjects.map((subject) => <button className={`world-card ${subject.color}`} key={subject.name} onClick={() => onSubject(subject.name)}><SubjectIcon subject={subject} /><div><small>7 MODUL GRATIS</small><h2>{subject.name}</h2><p>{subject.description}</p></div><span className="world-arrow"><ChevronRight /></span></button>)}</div><div className="gentle-note"><span>💡</span><p><strong>Tidak perlu terburu-buru.</strong> Kobi menyesuaikan tantangan dari jenjang dan jawabanmu.</p></div></main></>;
 }
 
+function CreativeView({ profile, onParent }: { profile: ChildProfile; onParent: () => void }) {
+  const activities = [
+    { icon: '🎨', title: 'Studio warna', copy: 'Buat gambar dari tiga bentuk sederhana.', tone: 'coral' },
+    { icon: '📖', title: 'Cerita bercabang', copy: 'Bantu Kobi memilih akhir cerita yang baik.', tone: 'blue' },
+    { icon: '🌱', title: 'Eksperimen keluarga', copy: 'Amati biji kacang bersama orang tua.', tone: 'green' },
+  ];
+  const comingSoon = () => alert('Aktivitas ini sedang disiapkan bersama tim akademik.');
+  return <><TopBar profile={profile} onEdit={onParent} /><main className="content creative-view"><div className="page-title"><p className="eyebrow">Ruang Kreatif</p><h1>Coba, buat, dan ceritakan</h1><p className="soft-copy">Tidak ada jawaban salah. Pilih kegiatan yang membuatmu penasaran.</p></div><section className="creative-hero"><div><span className="story-label">PILIHAN KOBI</span><h2>Buat kota dari bentuk</h2><p>Gabungkan lingkaran, segitiga, dan persegi menjadi kota impianmu.</p><Button onClick={comingSoon}><Palette size={20}/> Mulai berkarya</Button></div><div className="shape-play" aria-hidden="true"><i/><i/><i/><i/></div></section><div className="creative-list">{activities.map((item) => <button key={item.title} className={'creative-item ' + item.tone} onClick={comingSoon}><span>{item.icon}</span><span><strong>{item.title}</strong><small>{item.copy}</small></span><ChevronRight /></button>)}</div><p className="family-safety"><ShieldCheck size={18}/> Eksperimen rumah selalu meminta pendampingan orang tua.</p></main></>;
+}
 function ModulesView({ profile, subjectName, onBack, onLesson, onPremium }: { profile: ChildProfile; subjectName: SubjectName; onBack: () => void; onLesson: () => void; onPremium: () => void }) {
   const subject = subjects.find((item) => item.name === subjectName)!;
   const sceneIcons = ['🌳', '☁️', '🏕️', '🌈', '⛺', '⛰️', '🎈', '🏰'];
   const moduleNames = ['Ayo kenalan', 'Coba bersama Kobi', 'Main dan pilih', 'Cerita mini', 'Tantangan bintang', 'Petualangan lanjut', 'Misi kejutan', 'Uji kehebatan'];
   return <main className={`modules-view ${subject.color}`}>
     <header className="path-header"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Kembali"><ArrowLeft /></Button><Logo /><span className="path-grade">Kelas {profile.grade}</span></header>
-    <section className="path-intro"><SubjectIcon subject={subject} /><div><p className="eyebrow">Jalur petualangan</p><h1>{subject.name}</h1><p>Ikuti jalan bersama Kobi. Lima pos pertama terbuka gratis.</p></div></section>
-    <section className="adventure-map"><div className="map-river" aria-hidden="true" />{Array.from({ length: 8 }, (_, index) => { const unlocked = index < 5; return <div className={`map-row ${index % 2 ? 'right' : 'left'}`} key={index}><span className="scene-icon" aria-hidden="true">{sceneIcons[index]}</span><button className={`map-stop ${unlocked ? 'unlocked' : 'locked'}`} onClick={unlocked ? onLesson : onPremium}><span className="stop-number">{unlocked ? index + 1 : <LockKeyhole size={22} />}</span><span><small>{unlocked ? `MODUL ${index + 1}` : 'PAKET LENGKAP'}</small><strong>{moduleNames[index]}</strong></span>{unlocked && index === 4 && <b>BATAS GRATIS</b>}</button></div>; })}<img className="map-kobi" src="/assets/zeka-mascot.png" alt="Kobi menunggu di ujung jalur belajar" /></section>
+    <section className="path-intro"><SubjectIcon subject={subject} /><div><p className="eyebrow">Jalur petualangan</p><h1>{subject.name}</h1><p>Ikuti jalan bersama Kobi. Tujuh pos pertama terbuka gratis.</p></div></section>
+    <section className="adventure-map"><div className="map-river" aria-hidden="true" />{Array.from({ length: 8 }, (_, index) => { const unlocked = index < 7; return <div className={`map-row ${index % 2 ? 'right' : 'left'}`} key={index}><span className="scene-icon" aria-hidden="true">{sceneIcons[index]}</span><button className={`map-stop ${unlocked ? 'unlocked' : 'locked'}`} onClick={unlocked ? onLesson : onPremium}><span className="stop-number">{unlocked ? index + 1 : <LockKeyhole size={22} />}</span><span><small>{unlocked ? `MODUL ${index + 1}` : 'PAKET LENGKAP'}</small><strong>{moduleNames[index]}</strong></span>{unlocked && index === 6 && <b>BATAS GRATIS</b>}</button></div>; })}<img className="map-kobi" src="/assets/zeka-mascot.png" alt="Kobi menunggu di ujung jalur belajar" /></section>
   </main>;
 }
 
@@ -134,12 +143,12 @@ function LessonView({ profile, subject, onBack }: { profile: ChildProfile; subje
 }
 
 function BottomNav({ view, setView }: { view: View; setView: (view: View) => void }) {
-  const items = [{ id: 'home' as View, label: 'Beranda', icon: Home, color: 'blue' }, { id: 'explore' as View, label: 'Jelajah', icon: Map, color: 'yellow' }, { id: 'progress' as View, label: 'Hadiah', icon: Puzzle, color: 'coral' }, { id: 'parent' as View, label: 'Orang Tua', icon: UserRound, color: 'green' }];
+  const items = [{ id: 'home' as View, label: 'Beranda', icon: Home, color: 'blue' }, { id: 'explore' as View, label: 'Pelajaran', icon: Map, color: 'yellow' }, { id: 'creative' as View, label: 'Kreatif', icon: Palette, color: 'green' }, { id: 'progress' as View, label: 'Koleksiku', icon: Puzzle, color: 'coral' }];
   return <nav className="bottom-nav" aria-label="Navigasi utama">{items.map(({ id, label, icon: Icon, color }) => <Button key={id} variant="ghost" className={view === id ? `active ${color}` : color} onClick={() => setView(id)}><span className="nav-icon"><Icon size={27} strokeWidth={2.6} /></span><span>{label}</span></Button>)}</nav>;
 }
 
 function PremiumDialog({ open, setOpen }: { open: boolean; setOpen: (open: boolean) => void }) {
-  const [requested, setRequested] = useState(false); return <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setRequested(false); }}><DialogContent className="premium-dialog"><DialogHeader><span className="dialog-crown">👑</span><DialogTitle>Petualangan berikutnya menunggu!</DialogTitle><DialogDescription>Lima modul pertama tetap gratis. Paket lengkap membuka modul 6 dan seterusnya.</DialogDescription></DialogHeader><ul><li><Check size={19} /> Semua modul di 4 mata pelajaran</li><li><Check size={19} /> Tantangan sesuai kemampuan anak</li><li><Check size={19} /> Puzzle dan hadiah baru</li><li><ShieldCheck size={19} /> Tanpa iklan dan chat publik</li></ul>{requested ? <div className="payment-note"><Check size={21} /><span><strong>Siap dilanjutkan</strong>Alur pembayaran aman orang tua akan dibuka di tahap berikutnya.</span></div> : <Button className="premium-cta" onClick={() => setRequested(true)}>Lihat paket lengkap</Button>}<p className="fine-print">Pembelian hanya dapat dilakukan oleh orang tua.</p></DialogContent></Dialog>;
+  const [requested, setRequested] = useState(false); return <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setRequested(false); }}><DialogContent className="premium-dialog"><DialogHeader><span className="dialog-crown">👑</span><DialogTitle>Petualangan berikutnya menunggu!</DialogTitle><DialogDescription>Tujuh modul pertama tetap gratis. Paket lengkap membuka modul 8 dan seterusnya.</DialogDescription></DialogHeader><ul><li><Check size={19} /> Semua modul di 4 mata pelajaran</li><li><Check size={19} /> Tantangan sesuai kemampuan anak</li><li><Check size={19} /> Puzzle dan hadiah baru</li><li><ShieldCheck size={19} /> Tanpa iklan dan chat publik</li></ul>{requested ? <div className="payment-note"><Check size={21} /><span><strong>Siap dilanjutkan</strong>Alur pembayaran aman orang tua akan dibuka di tahap berikutnya.</span></div> : <Button className="premium-cta" onClick={() => setRequested(true)}>Lihat paket lengkap</Button>}<p className="fine-print">Pembelian hanya dapat dilakukan oleh orang tua.</p></DialogContent></Dialog>;
 }
 
 export default function HomePage() {
@@ -147,13 +156,14 @@ export default function HomePage() {
   useEffect(() => { const saved = localStorage.getItem('zeka-child-profile'); if (saved) { try { setProfile(JSON.parse(saved)); } catch {} } setReady(true); }, []);
   const saveProfile = (next: ChildProfile) => { localStorage.setItem('zeka-child-profile', JSON.stringify(next)); setProfile(next); setEditOpen(false); setView('home'); };
   const openSubject = (next: SubjectName) => { setSubject(next); setView('modules'); };
-  useEffect(() => { type ModelContext = { registerTool: (tool: object, options: { signal: AbortSignal }) => void | Promise<void> }; const context = (document as Document & { modelContext?: ModelContext }).modelContext; if (!context?.registerTool) return; const lifecycle = new AbortController(); void Promise.resolve(context.registerTool({ name: 'start_learning_session', title: 'Mulai sesi belajar', description: 'Membuka jalur belajar gratis sesuai profil kelas anak.', inputSchema: { type: 'object', properties: { subject: { type: 'string', enum: subjects.map((item) => item.name) } }, required: ['subject'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute(input: { subject: SubjectName }) { if (!subjects.some((item) => item.name === input.subject)) throw new Error('Mata pelajaran tidak tersedia.'); setSubject(input.subject); setView('modules'); return { status: 'opened', subject: input.subject, freeModules: 5 }; } }, { signal: lifecycle.signal })).catch(() => undefined); return () => lifecycle.abort(); }, []);
+  useEffect(() => { type ModelContext = { registerTool: (tool: object, options: { signal: AbortSignal }) => void | Promise<void> }; const context = (document as Document & { modelContext?: ModelContext }).modelContext; if (!context?.registerTool) return; const lifecycle = new AbortController(); void Promise.resolve(context.registerTool({ name: 'start_learning_session', title: 'Mulai sesi belajar', description: 'Membuka jalur belajar gratis sesuai profil kelas anak.', inputSchema: { type: 'object', properties: { subject: { type: 'string', enum: subjects.map((item) => item.name) } }, required: ['subject'], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute(input: { subject: SubjectName }) { if (!subjects.some((item) => item.name === input.subject)) throw new Error('Mata pelajaran tidak tersedia.'); setSubject(input.subject); setView('modules'); return { status: 'opened', subject: input.subject, freeModules: 7 }; } }, { signal: lifecycle.signal })).catch(() => undefined); return () => lifecycle.abort(); }, []);
   if (!ready) return <div className="splash"><Logo /><span>Menyiapkan petualangan...</span></div>;
   if (!profile) return <Onboarding onSave={saveProfile} />;
   return <div className="app-shell">
-    {view === 'home' && <HomeView profile={profile} onEdit={() => setEditOpen(true)} onSubject={openSubject} onExplore={() => setView('explore')} />}
-    {view === 'explore' && <ExploreView profile={profile} onEdit={() => setEditOpen(true)} onSubject={openSubject} />}
-    {view === 'progress' && <ProgressView profile={profile} onEdit={() => setEditOpen(true)} />}
+    {view === 'home' && <HomeView profile={profile} onEdit={() => setView('parent')} onSubject={openSubject} onExplore={() => setView('explore')} />}
+    {view === 'explore' && <ExploreView profile={profile} onEdit={() => setView('parent')} onSubject={openSubject} />}
+    {view === 'creative' && <CreativeView profile={profile} onParent={() => setView('parent')} />}
+    {view === 'progress' && <ProgressView profile={profile} onEdit={() => setView('parent')} />}
     {view === 'parent' && <ParentView profile={profile} onEdit={() => setEditOpen(true)} onPremium={() => setPremiumOpen(true)} />}
     {view === 'modules' && <ModulesView profile={profile} subjectName={subject} onBack={() => setView('explore')} onLesson={() => setView('lesson')} onPremium={() => setPremiumOpen(true)} />}
     {view === 'lesson' && <LessonView profile={profile} subject={subject} onBack={() => setView('modules')} />}
