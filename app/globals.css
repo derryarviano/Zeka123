@@ -67,3 +67,9 @@
 @media(max-width:560px){.bgm-dock{top:82px}.path-title{padding-right:92px}.path-kobi{width:92px;height:105px}.kobi-guide span{right:calc(50% + 24px)!important;width:126px}}
 .hero-kobi{position:absolute;z-index:3;right:-10px;bottom:-15px;width:230px;height:270px;background:url('/assets/kobi-four-poses.png') 0 center/400% 100% no-repeat;filter:drop-shadow(0 9px 2px rgba(16,43,90,.16));animation:kobiHero 4s ease-in-out infinite}.kobi-celebrate{width:230px;height:220px;margin:0 auto;background:url('/assets/kobi-four-poses.png') 100% center/400% 100% no-repeat;filter:drop-shadow(0 9px 2px rgba(16,43,90,.14));animation:kobiCelebrate .9s cubic-bezier(.2,.8,.3,1) infinite}@keyframes kobiHero{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-9px) rotate(2deg)}}
 @media(max-width:560px){.hero-kobi{right:-23px;bottom:-18px;width:220px;height:255px}.kobi-celebrate{width:210px;height:205px}}
+
+/* QA hardening */
+button:focus-visible,input:focus-visible,select:focus-visible{outline:4px solid #ffca28!important;outline-offset:3px}.journey-stop.completed{border-color:#39a875;background:#e8f8f0;box-shadow:0 5px 0 #b9e3cd}.journey-stop.completed .stop-dot{background:#23966a;box-shadow:0 4px 0 #17714f}.privacy-panel{display:grid;grid-template-columns:auto 1fr;gap:12px;margin-top:22px;padding:16px;border:2px solid #c9d9f1;border-radius:22px;background:#fff}.privacy-panel>svg{color:#2768d5}.privacy-panel strong{font-size:15px}.privacy-panel p{margin:4px 0 9px;color:#64718a;font-size:13px;line-height:1.4}.privacy-panel button{border:0;background:transparent;color:#b4443a;font-size:13px;font-weight:850;padding:0}.progress-rail{position:relative}.feedback-card{min-height:60px}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
