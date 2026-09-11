@@ -1,0 +1,42 @@
+{
+  "buildId": "19f39cb1-e211-493e-991f-3da2c7bd92a7",
+  "trailingSlash": false,
+  "routes": [
+    {
+      "route": "/",
+      "status": "rendered",
+      "revalidate": false,
+      "router": "app",
+      "tags": [
+        "/",
+        "_N_T_/",
+        "_N_T_/index",
+        "_N_T_/layout",
+        "_N_T_/page"
+      ],
+      "headers": {
+        "link": "</assets/zeka-wordmark.png>; rel=preload; as=\"image\", </_next/static/_vinext_fonts/nunito-653c7934b13e/nunito-b8db197d.woff2>; rel=preload; as=font; type=font/woff2; crossorigin"
+      }
+    },
+    {
+      "route": "/404",
+      "status": "rendered",
+      "revalidate": false,
+      "router": "app"
+    }
+  ],
+  "pregeneratedConcretePaths": [
+    [
+      "/",
+      [
+        "/"
+      ]
+    ],
+    [
+      "/404",
+      [
+        "/404"
+      ]
+    ]
+  ]
+}
