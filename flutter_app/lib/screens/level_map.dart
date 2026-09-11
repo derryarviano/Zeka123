@@ -215,27 +215,6 @@ class _MapHeader extends StatelessWidget {
                 alignment: Alignment.bottomCenter,
               ),
             ),
-            Positioned(
-              right: 10,
-              top: 10,
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 105),
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Text(
-                  copy.$2,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: subject.color,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),

@@ -48,11 +48,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
               child: Column(
                 children: [
-                  Image.asset(
-                    'assets/images/zeka-wordmark.png',
-                    height: 45,
-                    fit: BoxFit.contain,
-                  ),
+                  const ZekaBrand(height: 45),
                   const SizedBox(height: 8),
                   SizedBox(
                     height: 172,

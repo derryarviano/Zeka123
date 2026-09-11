@@ -14,6 +14,7 @@ class ProgressStore extends ChangeNotifier {
   bool onboarded = false;
   bool musicOn = false;
   final Set<String> completed = {};
+  final Set<int> collectionUnlocked = {};
 
   static Future<ProgressStore> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -25,6 +26,11 @@ class ProgressStore extends ChangeNotifier {
       ..onboarded = prefs.getBool('onboarded') ?? false
       ..musicOn = prefs.getBool('musicOn') ?? false;
     store.completed.addAll(prefs.getStringList('completed') ?? const []);
+    store.collectionUnlocked.addAll(
+      (prefs.getStringList('collectionUnlocked') ?? const [])
+          .map(int.tryParse)
+          .whereType<int>(),
+    );
     return store;
   }
 
@@ -57,6 +63,20 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> redeemCollection(int index, int cost) async {
+    if (collectionUnlocked.contains(index)) return true;
+    if (cost < 0 || stars < cost) return false;
+    stars -= cost;
+    collectionUnlocked.add(index);
+    await _prefs.setInt('stars', stars);
+    await _prefs.setStringList(
+      'collectionUnlocked',
+      collectionUnlocked.map((value) => '$value').toList(),
+    );
+    notifyListeners();
+    return true;
+  }
+
   Future<void> reset() async {
     await _prefs.clear();
     name = '';
@@ -66,6 +86,7 @@ class ProgressStore extends ChangeNotifier {
     onboarded = false;
     musicOn = false;
     completed.clear();
+    collectionUnlocked.clear();
     notifyListeners();
   }
 }

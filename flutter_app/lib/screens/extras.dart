@@ -9,10 +9,7 @@ class CollectionScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final earned = List.generate(
-      12,
-      (index) => index * 60,
-    ).where((requiredStars) => progress.stars >= requiredStars).length;
+    final earned = progress.collectionUnlocked.length;
     const finds = [
       '🦋',
       '🌳',
@@ -34,7 +31,7 @@ class CollectionScreen extends StatelessWidget {
           'Koleksi penemuan',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const Text('Setiap modul membuka bagian baru untuk dikoleksi.'),
+        const Text('Tukarkan bintang dan pilih sendiri penemuanmu.'),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.all(18),
@@ -83,30 +80,91 @@ class CollectionScreen extends StatelessWidget {
           itemCount: 12,
           itemBuilder: (context, index) {
             final requiredStars = index * 60;
-            final unlocked = progress.stars >= requiredStars;
+            final unlocked = progress.collectionUnlocked.contains(index);
+            final affordable = progress.stars >= requiredStars;
             return InkWell(
               borderRadius: BorderRadius.circular(18),
-              onTap: unlocked
-                  ? null
-                  : () {
-                      final remaining = requiredStars - progress.stars;
-                      ScaffoldMessenger.of(context)
-                        ..hideCurrentSnackBar()
-                        ..showSnackBar(
-                          SnackBar(
-                            behavior: SnackBarBehavior.floating,
-                            backgroundColor: const Color(0xFF173260),
-                            content: Text(
-                              'Kamu membutuhkan $remaining bintang lagi, ayo lanjutkan petualanganmu!',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+              onTap: () async {
+                if (unlocked) {
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        content: Text(
+                          '${finds[index]} Sudah menjadi koleksimu!',
+                        ),
+                      ),
+                    );
+                  return;
+                }
+                if (!affordable) {
+                  final remaining = requiredStars - progress.stars;
+                  ScaffoldMessenger.of(context)
+                    ..hideCurrentSnackBar()
+                    ..showSnackBar(
+                      SnackBar(
+                        behavior: SnackBarBehavior.floating,
+                        backgroundColor: const Color(0xFF173260),
+                        content: Text(
+                          'Kamu membutuhkan $remaining bintang lagi, ayo lanjutkan petualanganmu!',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
                           ),
-                        );
-                    },
+                        ),
+                      ),
+                    );
+                  return;
+                }
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: Text(
+                      requiredStars == 0
+                          ? 'Buka penemuan gratis?'
+                          : 'Tukarkan $requiredStars bintang?',
+                    ),
+                    content: Text(
+                      requiredStars == 0
+                          ? 'Penemuan pertama ini hadiah untuk petualanganmu.'
+                          : 'Bintangmu akan berkurang setelah penemuan dibuka.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: const Text('Nanti dulu'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: const Text('Buka sekarang'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed != true || !context.mounted) return;
+                final redeemed = await progress.redeemCollection(
+                  index,
+                  requiredStars,
+                );
+                if (!context.mounted || !redeemed) return;
+                ScaffoldMessenger.of(context)
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(
+                    SnackBar(
+                      behavior: SnackBarBehavior.floating,
+                      backgroundColor: const Color(0xFF13704F),
+                      content: Text(
+                        '${finds[index]} Penemuan berhasil dibuka!',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  );
+              },
               child: Ink(
                 decoration: BoxDecoration(
                   color: unlocked ? const Color(0xFFFFDF68) : Colors.white,
@@ -114,6 +172,8 @@ class CollectionScreen extends StatelessWidget {
                   border: Border.all(
                     color: unlocked
                         ? const Color(0xFFDDAE00)
+                        : affordable
+                        ? const Color(0xFF2F6FE4)
                         : const Color(0xFFBFCDE2),
                     width: 2,
                   ),
@@ -127,7 +187,7 @@ class CollectionScreen extends StatelessWidget {
                     ),
                     if (!unlocked)
                       Text(
-                        '$requiredStars ⭐',
+                        requiredStars == 0 ? 'Gratis' : '$requiredStars ⭐',
                         style: const TextStyle(
                           color: Color(0xFF52627C),
                           fontSize: 11,
@@ -143,59 +203,6 @@ class CollectionScreen extends StatelessWidget {
       ],
     );
   }
-}
-
-class CreativeScreen extends StatelessWidget {
-  const CreativeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.all(16),
-    children: [
-      Text('Sudut kreasi', style: Theme.of(context).textTheme.headlineMedium),
-      const Text('Istirahat sejenak sambil tetap penasaran.'),
-      const SizedBox(height: 16),
-      ...const [
-        (
-          '🎨',
-          'Gambar bebas',
-          'Buat dunia baru bersama Kobi.',
-          Color(0xFFFFECE8),
-        ),
-        (
-          '🧩',
-          'Tantangan pola',
-          'Susun bentuk dan temukan polanya.',
-          Color(0xFFF1EAFF),
-        ),
-        (
-          '🌿',
-          'Pengamatan kecil',
-          'Cari tiga bentuk daun di sekitar.',
-          Color(0xFFE4F7EF),
-        ),
-      ].map(
-        (item) => Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          color: item.$4,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: ListTile(
-            minVerticalPadding: 18,
-            leading: Text(item.$1, style: const TextStyle(fontSize: 34)),
-            title: Text(
-              item.$2,
-              style: const TextStyle(fontWeight: FontWeight.w900),
-            ),
-            subtitle: Text(item.$3),
-            trailing: const Icon(Icons.chevron_right_rounded),
-          ),
-        ),
-      ),
-    ],
-  );
 }
 
 class ParentScreen extends StatelessWidget {

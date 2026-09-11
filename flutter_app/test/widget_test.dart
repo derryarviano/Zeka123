@@ -5,6 +5,20 @@ import 'package:zeka123/main.dart';
 import 'package:zeka123/models.dart';
 
 void main() {
+  test('penukaran koleksi mengurangi dan menyimpan bintang', () async {
+    SharedPreferences.setMockInitialValues({'stars': 120});
+    final progress = await ProgressStore.load();
+
+    expect(progress.collectionUnlocked, isEmpty);
+    expect(await progress.redeemCollection(1, 60), isTrue);
+    expect(progress.stars, 60);
+    expect(progress.collectionUnlocked, contains(1));
+
+    final reloaded = await ProgressStore.load();
+    expect(reloaded.stars, 60);
+    expect(reloaded.collectionUnlocked, contains(1));
+  });
+
   testWidgets('onboarding dan jumlah gambar aman pada layar 438x608', (
     tester,
   ) async {

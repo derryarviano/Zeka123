@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'models.dart';
 import 'screens/extras.dart';
+import 'screens/experiments.dart';
 import 'screens/home.dart';
 import 'screens/learn.dart';
 import 'screens/onboarding.dart';
@@ -26,7 +27,7 @@ class ZekaApp extends StatelessWidget {
   );
 }
 
-enum AppView { home, map, lesson, finish, collection, creative, parent }
+enum AppView { home, map, lesson, finish, collection, experiments, parent }
 
 class ZekaRoot extends StatefulWidget {
   const ZekaRoot({super.key, required this.progress});
@@ -114,7 +115,7 @@ class _ZekaRootState extends State<ZekaRoot> {
         onLevel: _openLesson,
       ),
       AppView.collection => CollectionScreen(progress: widget.progress),
-      AppView.creative => const CreativeScreen(),
+      AppView.experiments => const ExperimentScreen(),
       AppView.parent => ParentScreen(progress: widget.progress),
       _ => HomeScreen(
         progress: widget.progress,
@@ -134,7 +135,7 @@ class _ZekaRootState extends State<ZekaRoot> {
           AppView.home || AppView.parent => 0,
           AppView.map => 1,
           AppView.collection => 2,
-          AppView.creative => 3,
+          AppView.experiments => 3,
           _ => 0,
         },
         onDestinationSelected: (index) => setState(() {
@@ -142,7 +143,7 @@ class _ZekaRootState extends State<ZekaRoot> {
             AppView.home,
             AppView.map,
             AppView.collection,
-            AppView.creative,
+            AppView.experiments,
           ][index];
         }),
         destinations: const [
@@ -162,9 +163,9 @@ class _ZekaRootState extends State<ZekaRoot> {
             label: 'Koleksi',
           ),
           NavigationDestination(
-            icon: IllustratedIcon(index: 7, size: 31),
-            selectedIcon: IllustratedIcon(index: 7, size: 35),
-            label: 'Kreasi',
+            icon: IllustratedIcon(index: 3, size: 31),
+            selectedIcon: IllustratedIcon(index: 3, size: 35),
+            label: 'Eksperimen',
           ),
         ],
       ),
@@ -186,11 +187,7 @@ class ZekaTopBar extends StatelessWidget implements PreferredSizeWidget {
     backgroundColor: Colors.white,
     surfaceTintColor: Colors.white,
     titleSpacing: 16,
-    title: Image.asset(
-      'assets/images/zeka-wordmark.png',
-      height: 34,
-      fit: BoxFit.contain,
-    ),
+    title: const ZekaBrand(height: 34),
     actions: [
       _TopChip(
         icon: Icons.local_fire_department_rounded,

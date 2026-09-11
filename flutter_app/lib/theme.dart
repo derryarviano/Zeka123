@@ -134,6 +134,34 @@ const subjects = <SubjectInfo>[
   ),
 ];
 
+class ZekaBrand extends StatelessWidget {
+  const ZekaBrand({super.key, this.height = 34});
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Image.asset(
+        'assets/images/zeka-wordmark.png',
+        height: height,
+        fit: BoxFit.contain,
+      ),
+      const SizedBox(width: 3),
+      Text(
+        '123',
+        style: TextStyle(
+          fontFamily: 'Fredoka',
+          color: blue,
+          fontSize: height * .58,
+          height: 1,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    ],
+  );
+}
+
 class IllustratedIcon extends StatelessWidget {
   const IllustratedIcon({super.key, required this.index, this.size = 48});
   final int index;
